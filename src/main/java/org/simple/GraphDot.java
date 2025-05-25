@@ -5,6 +5,7 @@ import org.simple.instructions.Instr;
 
 import java.util.*;
 
+// Todo: Nicer GRAPH
 public class GraphDot {
 
     public String generateDotOutput(EntryBB entry) {
