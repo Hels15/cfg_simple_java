@@ -8,6 +8,7 @@ import java.util.*;
 // Todo: Nicer GRAPH
 public class GraphDot {
 
+    // scope edges has to come somewhere
     public String generateDotOutput(EntryBB entry) {
         StringBuilder sb = new StringBuilder();
 

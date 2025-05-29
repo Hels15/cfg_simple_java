@@ -7,18 +7,34 @@ import org.simple.instructions.*;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
+import java.util.HashSet;
+
 
 public class Parser {
     private final Lexer _lexer;
 
+    public static EntryBB _entry;
+    public ScopeInstr _scope;
+
+    private final HashSet<String> KEYWORDS = new HashSet<>(){{
+        add("int");
+        add("return");
+    }};
+
     public Parser(String source) {
         _lexer = new Lexer(source);
     }
-    public BB parse() {
+    public Instr parse() {return parse(false);}
+    public Instr parse(boolean show) {
         EntryBB entry = new EntryBB();
 
+        _entry = entry;
+
         BB mainBB = new BB();
-        var ret = parseStatement();
+        var ret = parseBlock();
+
+        if(!_lexer.isEOF()) throw error("Syntax error, unexpected " + _lexer.getAnyNextToken());
+        if(show) showGraph();
 
         entry.addSuccessor(mainBB);
         mainBB.addInstr(ret);
@@ -26,19 +42,64 @@ public class Parser {
         ExitBB exitBB = new ExitBB();
         mainBB.addSuccessor(exitBB);
 
-        return entry;
+        return ret;
     }
 
+    private String requireId() {
+        String id = _lexer.matchId();
+        if(id != null && !KEYWORDS.contains(id)) return id;
+        throw error("Expected an identifier, found '"+id+"'");
+    }
     private Instr parseStatement() {
         if (matchx("return")) return parseReturn();
-        throw errorSyntax("a statement");
+        else if(matchx("int")) return parseDecl();
+        else if(matchx("{")) return require(parseBlock(), "}");
+        else if(matchx("#showGraph")) return require(showGraph(), ";");
+        else if(matchx(";")) return null;
+        else return parseExpressionStatement();
     }
 
+    private Instr parseDecl() {
+        var name = requireId();
+        require("=");
+        var expr = require(parseExpression(), ";");
+        if(_scope.define(name, expr) == null) throw error("Redefining name '" + name + "'");
+        return expr;
+    }
+
+    private Instr parseExpressionStatement() {
+        var name = requireId();
+        require("=");
+        var expr = require(parseExpression(), ";");
+        if( _scope.update(name, expr)==null )
+            throw error("Undefined name '" + name + "'");
+        return expr;
+    }
     private ReturnInstr parseReturn() {
-        // Todo: parse down expression here
         var expr = require(parseExpression(), ";");
         return new ReturnInstr(expr);
     }
+
+    private Instr parseBlock() {
+        _scope.push();
+        Instr n = null;
+        while(!peek('}') && !_lexer.isEOF()) {
+            Instr n0 = parseStatement();
+            if(n0 != null) n = n0;
+        }
+        _scope.pop();
+        return n;
+    }
+
+    private boolean peek(char ch) {
+        return _lexer.peek(ch);
+    }
+
+    private Instr showGraph() {
+        System.out.println(new GraphDot().generateDotOutput(_entry));
+        return null;
+    }
+
     private Instr parseExpression() {
         return parseAddition();
     }
@@ -152,6 +213,10 @@ public class Parser {
             return true;
         }
 
+        String matchId() {
+            skipWhiteSpace();
+            return isIdStart(peek()) ? parseId() : null;
+        }
         boolean matchx(String syntax) {
             if( !match(syntax) ) return false;
             if( !isIdLetter(peek()) ) return true;
@@ -214,6 +279,10 @@ public class Parser {
                     : (char) _input[_position];
         }
 
+        private boolean peek(char ch) {
+            skipWhiteSpace();
+            return peek() == ch;
+        }
 
    }
 

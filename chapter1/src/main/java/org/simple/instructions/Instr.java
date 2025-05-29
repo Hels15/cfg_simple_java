@@ -53,6 +53,11 @@ public abstract class Instr {
                 : _print1(sb);
     }
 
+    Instr addDef(Instr new_def) {
+        _inputs.add(new_def);
+        if(new_def != null) new_def.addUse(this);
+        return new_def;
+    }
     abstract StringBuilder _print1(StringBuilder sb);
 
     public abstract Type compute();
@@ -75,6 +80,15 @@ public abstract class Instr {
     }
 
     boolean isDead() { return isUnused() && nIns()==0 && _type==null; }
+
+    void popN(int n ) {
+        for (int i = 0; i < n; i++) {
+            Instr old_def = _inputs.removeLast();
+            if(old_def != null && old_def.delUse(this)) {
+                old_def.kill();
+            }
+        }
+    }
 
     Instr setDef(int idx, Instr new_def) {
         Instr old_def = in(idx);
