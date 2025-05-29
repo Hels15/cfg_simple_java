@@ -40,7 +40,8 @@ public class GraphDot {
             sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n");
 
             for (Instr instr : bb._instrs) {
-                sb.append(String.format("        <TR><TD>i%d: %s</TD></TR>\n", instr._nid, "Instruction " + instr._nid));
+                sb.append(String.format("        <TR><TD>i%d: %s</TD></TR>\n", instr._nid, instr.toString()));
+
             }
 
             sb.append("      </TABLE>\n");

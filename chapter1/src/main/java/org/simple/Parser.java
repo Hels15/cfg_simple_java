@@ -3,8 +3,9 @@ package org.simple;
 import org.simple.bbs.BB;
 import org.simple.bbs.EntryBB;
 import org.simple.bbs.ExitBB;
-import org.simple.instructions.Instr;
-import org.simple.instructions.ReturnInstr;
+import org.simple.instructions.*;
+import org.simple.type.Type;
+import org.simple.type.TypeInteger;
 
 
 public class Parser {
@@ -35,8 +36,39 @@ public class Parser {
 
     private ReturnInstr parseReturn() {
         // Todo: parse down expression here
-//        var expr = require(parseExpression(), ";");
-        return new ReturnInstr();
+        var expr = require(parseExpression(), ";");
+        return new ReturnInstr(expr);
+    }
+    private Instr parseExpression() {
+        return parseAddition();
+    }
+    private Instr parseAddition() {
+        var lhs = parseMultiplication();
+
+        if (match("+")) return new AddInstr(lhs, parseAddition()).peephole();
+        if (match("-")) return new SubInstr(lhs, parseAddition()).peephole();
+        return lhs;
+    }
+
+    private Instr parseMultiplication() {
+        var lhs = parseUnary();
+        if (match("*")) return new MulInstr(lhs, parseMultiplication()).peephole();
+        if (match("/")) return new DivInstr(lhs, parseMultiplication()).peephole();
+        return lhs;
+    }
+    private Instr parseUnary() {
+        if (match("-")) return new MinusInstr(parseUnary()).peephole();
+        return parsePrimary();
+    }
+
+    private Instr parsePrimary() {
+        if( _lexer.isNumber() ) return parseIntegerLiteral();
+        if( match("(") ) return require(parseExpression(), ")");
+        throw errorSyntax("integer literal");
+    }
+
+    private ConstantInstr parseIntegerLiteral() {
+        return (ConstantInstr) new ConstantInstr(_lexer.parseNumber()).peephole();
     }
 
     private boolean matchx(String syntax) { return _lexer.matchx(syntax); }
@@ -85,12 +117,6 @@ public class Parser {
         // True if at EOF
         private boolean isEOF() {
             return _position >= _input.length;
-        }
-
-        // Peek next character, or report EOF
-        private char peek() {
-            return isEOF() ? Character.MAX_VALUE   // Special value that causes parsing to terminate
-                    : (char) _input[_position];
         }
 
         private char nextChar() {
@@ -145,12 +171,13 @@ public class Parser {
         boolean isNumber() {return isNumber(peek());}
         boolean isNumber(char ch) {return Character.isDigit(ch);}
 
-        private long parseNumber() {
+        private Type parseNumber() {
             String snum = parseNumberString();
             if (snum.length() > 1 && snum.charAt(0) == '0')
                 throw error("Syntax error: integer values cannot start with '0'");
-            return Long.parseLong(snum);
+            return TypeInteger.constant(Long.parseLong(snum));
         }
+
         private String parseNumberString() {
             int start = _position;
             while (isNumber(nextChar())) ;
@@ -181,6 +208,15 @@ public class Parser {
             int start = _position;
             return new String(_input, start, 1);
         }
+        // Peek next character, or report EOF
+        private char peek() {
+            return isEOF() ? Character.MAX_VALUE   // Special value that causes parsing to terminate
+                    : (char) _input[_position];
+        }
+
+
+   }
+
+
     }
-}
 
