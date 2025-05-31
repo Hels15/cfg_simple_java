@@ -60,6 +60,16 @@ public abstract class Instr {
     }
     abstract StringBuilder _print1(StringBuilder sb);
 
+    public <I extends Instr> I keep() {return addUse(null);}
+    public <I extends Instr> I unkeep() {delUse(null); return (I)this;}
+    private Instr deadCodeElim(Instr m) {
+        if(m != this && isUnused()) {
+            m.keep();
+            kill();
+            m.unkeep();
+        }
+        return m;
+    }
     public abstract Type compute();
     public abstract Instr idealize();
 
@@ -103,28 +113,37 @@ public abstract class Instr {
 
         return new_def;
     }
-    protected <N extends Instr> Instr addUse(Instr n) {
+    protected <I extends Instr> I addUse(Instr n) {
         _outputs.add(n);
-        return (N)this;
+        return (I)this;
     }
 
+    Instr swap12() {
+        Instr tmp = in(0);
+        _inputs.set(0, in(1));
+        _inputs.set(1, tmp);
+        return this;
+    }
     protected boolean delUse(Instr n) {
         Utils.del(_outputs, Utils.find(_outputs, n));
         return _outputs.isEmpty();
     }
+
     public final Instr peephole() {
+        if(this instanceof MulInstr ) {
+            System.out.print("Here");
+        }
         Type type = _type = compute();
 
         if(_disablePeephole) return this;
 
         // Replace constant computations from non-constants with a constant node
         if (!(this instanceof ConstantInstr) && type.isConstant()) {
-            kill();             // Kill `this` because replacing with a Constant
-            return new ConstantInstr(type).peephole();
+            return  deadCodeElim(new ConstantInstr(type).peephole());
         }
 
         Instr n = idealize();
-        if(n != null) return n;
+        if(n != null) return deadCodeElim(n.peephole());
 
         return this;
 

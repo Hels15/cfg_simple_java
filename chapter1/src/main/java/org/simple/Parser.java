@@ -32,18 +32,25 @@ public class Parser {
         _exit  = new ExitBB();
     }
     public Instr parse() {return parse(false);}
-    public Instr parse(boolean show) {
+    public Instr parse(boolean show, TypeInteger arg) {
 
+        _scope.push();
         _entry.addSuccessor(_cBB);
         // For now no jumping instructions
         _cBB.addSuccessor(_exit);
 
+        _scope.define(ScopeInstr.ARG0, new ConstantInstr(arg, ScopeInstr.ARG0).peephole());
+
         var ret = parseBlock();
+        _scope.pop();
 
         if(!_lexer.isEOF()) throw error("Syntax error, unexpected " + _lexer.getAnyNextToken());
         if(show) showGraph();
 
         return ret;
+    }
+    public Instr parse(boolean show) {
+        return parse(show, TypeInteger.BOT);
     }
 
     private String requireId() {
@@ -90,8 +97,8 @@ public class Parser {
                 // already visualised in Scope
                 continue;
             }
-            _cBB.addInstr(n0);
-            if(n0 != null) n = n0;
+
+            if(n0 != null) {_cBB.addInstr(n0); n = n0;}
         }
         _scope.pop();
         return n;
@@ -107,7 +114,18 @@ public class Parser {
     }
 
     private Instr parseExpression() {
-        return parseAddition();
+        return parseComparison();
+    }
+
+    private Instr parseComparison() {
+        var lhs = parseAddition();
+        if (match("==")) return new BoolInstr.EQ(lhs, parseComparison()).peephole();
+        if (match("!=")) return new NotInstr(new BoolInstr.EQ(lhs, parseComparison()).peephole()).peephole();
+        if (match("<=")) return new BoolInstr.LE(lhs, parseComparison()).peephole();
+        if (match("<" )) return new BoolInstr.LT(lhs, parseComparison()).peephole();
+        if (match(">=")) return new BoolInstr.LE(parseComparison(), lhs).peephole();
+        if (match(">" )) return new BoolInstr.LT(parseComparison(), lhs).peephole();
+        return lhs;
     }
     private Instr parseAddition() {
         var lhs = parseMultiplication();

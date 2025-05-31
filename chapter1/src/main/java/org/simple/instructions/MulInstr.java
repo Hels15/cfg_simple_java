@@ -12,6 +12,7 @@ public class MulInstr extends Instr {
                 in(1)._type instanceof TypeInteger i1) {
             if (i0.isConstant() && i1.isConstant())
                 return TypeInteger.constant(i0.value()*i1.value());
+            return i0.meet(i1);
         }
         return Type.BOTTOM;
     }
@@ -23,5 +24,17 @@ public class MulInstr extends Instr {
         return sb.append(")");
     }
 
-    @Override public Instr idealize() {return null;}
+    @Override public Instr idealize() {
+        Instr lhs = in(0);
+        Instr rhs = in(1);
+
+        Type t1 = lhs._type;
+        Type t2 = rhs._type;
+
+        if(t2.isConstant() && t2 instanceof TypeInteger i && i.value() == 1) return lhs;
+
+        if(t1.isConstant() && !t2.isConstant()) return swap12();
+
+        return null;
+    }
 }

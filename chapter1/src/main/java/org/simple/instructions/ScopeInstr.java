@@ -7,6 +7,8 @@ import java.util.*;
 public class ScopeInstr extends Instr{
     public final Stack<HashMap<String, Integer>> _scopes;
 
+    public static final String ARG0 = "arg";
+
     public ScopeInstr() {
         _scopes = new Stack<>();
         _type = Type.BOTTOM;

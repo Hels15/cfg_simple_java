@@ -15,6 +15,7 @@ public class DivInstr extends Instr{
                 return i1.value() == 0
                         ? TypeInteger.ZERO
                         : TypeInteger.constant(i0.value()/i1.value());
+            return i0.meet(i1);
         }
         return Type.BOTTOM;
     }
@@ -26,5 +27,8 @@ public class DivInstr extends Instr{
         return sb.append(")");
     }
 
-    @Override public Instr idealize() {return null;}
+    @Override public Instr idealize() {
+        if(in(1)._type.isConstant() && in(1)._type instanceof TypeInteger i && i.value() == 1) return in(0);
+        return null;
+    }
 }

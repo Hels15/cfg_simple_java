@@ -12,7 +12,9 @@ public class Type{
     protected Type(byte type) {_type = type;}
 
     public static final Type BOTTOM = new Type(TBOT);
+    public static final Type TOP    = new Type(TTOP);
 
+    public Type meet(Type other) {return Type.BOTTOM; }
     public boolean isConstant() {return _type == TTOP;}
 
     public StringBuilder _print(StringBuilder sb) {return is_simple() ? sb.append(STRS[_type]) : sb;}
