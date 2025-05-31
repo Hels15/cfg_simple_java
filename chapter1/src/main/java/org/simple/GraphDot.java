@@ -2,6 +2,7 @@ package org.simple;
 import org.simple.bbs.BB;
 import org.simple.bbs.EntryBB;
 import org.simple.instructions.Instr;
+import org.simple.instructions.ScopeInstr;
 
 import java.util.*;
 
@@ -9,14 +10,11 @@ import java.util.*;
 public class GraphDot {
 
     // scope edges has to come somewhere
-    public String generateDotOutput(EntryBB entry) {
+    public String generateDotOutput(EntryBB entry, ScopeInstr scopeA) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("digraph G {\n\n");
         sb.append("  node [shape=none, fontname=Helvetica];\n\n");
-
-        sb.append("  start [shape=Mdiamond, label=\"start\"];\n");
-        sb.append("  end [shape=Msquare, label=\"end\"];\n\n");
 
         Set<BB> visited = new HashSet<>();
         Queue<BB> queue = new LinkedList<>();
@@ -40,6 +38,21 @@ public class GraphDot {
             sb.append(String.format("    %s [label=<\n", bbId));
             sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n");
 
+            // smarter solution
+            if(!bb._instrs.isEmpty()) {
+                for(HashMap<String, Integer> scope: scopeA._scopes ) {
+                    for(Map.Entry<String, Integer> entrySet : scope.entrySet()) {
+                        String name = entrySet.getKey();
+                        Integer nid = entrySet.getValue();
+                        Instr instr = scopeA.in(nid);
+                        if (instr != null) {
+                            sb.append(String.format("        <TR><TD>%s: %s</TD></TR>\n", name, instr));
+                        } else {
+                            sb.append(String.format("        <TR><TD>%s: null</TD></TR>\n", name));
+                        }
+                    }
+                }
+            }
             for (Instr instr : bb._instrs) {
                 sb.append(String.format("        <TR><TD>i%d: %s</TD></TR>\n", instr._nid, instr.toString()));
 
@@ -56,22 +69,17 @@ public class GraphDot {
 
         // Add edges between BBs
         sb.append("\n");
-        sb.append("  start -> " + bbIds.get(entry) + ";\n");
 
         for (Map.Entry<BB, String> entrySet : bbIds.entrySet()) {
             BB bb = entrySet.getKey();
             String fromId = entrySet.getValue();
 
-            if (bb._succs.isEmpty()) {
-                sb.append("  " + fromId + " -> end;\n");
-            } else {
                 for (BB succ : bb._succs) {
                     String toId = bbIds.get(succ);
                     if (toId != null) {
                         sb.append(String.format("  %s -> %s;\n", fromId, toId));
                     }
                 }
-            }
         }
 
         sb.append("}\n");

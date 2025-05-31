@@ -14,6 +14,7 @@ public class Test1 {
         public void testSimpleProgram() {
         Parser parser = new Parser("return 1;");
         ReturnInstr ret = (ReturnInstr)parser.parse();
+        assertEquals("return 1;", ret.print());
         // check entry block
         assertEquals(1, Parser._entry._succs.size());
         assertEquals(0, Parser._entry._preds.size());
@@ -28,85 +29,79 @@ public class Test1 {
         // get Entry block
         // print graph
         GraphDot graphDot = new GraphDot();
-        System.out.println(graphDot.generateDotOutput(Parser._entry));
+        System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
         }
 
         @Test
         public void testAddPeephole() {
-                Instr._disablePeephole = true;
                 Parser parser = new Parser("return 1+2;");
                 ReturnInstr ret = (ReturnInstr)parser.parse();
 
                 assertEquals("return 3;", ret.print());
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
         }
 
         @Test
         public void testSubPeephole() {
-                Instr._disablePeephole = true;
                 Parser parser = new Parser("return 1-2;");
                 ReturnInstr ret = (ReturnInstr)parser.parse();
 
                 assertEquals("return -1;", ret.print());
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
         }
 
 
         @Test
         public void testMulPeephole() {
-                Instr._disablePeephole = true;
                 Parser parser = new Parser("return 2*3;");
                 ReturnInstr ret = (ReturnInstr)parser.parse();
                 assertEquals("return 6;", ret.print());
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
         }
 
         @Test
         public void testDivPeephole() {
-                Instr._disablePeephole = true;
                 Parser parser = new Parser("return 6/3;");
                 ReturnInstr ret = (ReturnInstr)parser.parse();
 
                 assertEquals("return 2;", ret.print());
 
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
         }
 
         @Test
         public void testMinusPeephole() {
-                Instr._disablePeephole = true;
                 Parser parser = new Parser("return 6/-3;");
                 ReturnInstr ret = (ReturnInstr)parser.parse();
                 assertEquals("return -2;", ret.print());
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
         }
 
         @Test
         public void testExample() {
-                Instr._disablePeephole = true;
                 Parser parser = new Parser("return 1+2*3+-5;");
                 ReturnInstr ret = (ReturnInstr)parser.parse();
 
                 assertEquals("return 2;", ret.print());
 
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
         }
         @Test
         public void testVarDecl() {
-                Parser parser = new Parser("int a = 1; return a;");
-                ReturnInstr ret = (ReturnInstr) parser.parse(true);
+                Parser parser = new Parser("int a = 1; return a; #showGraph;");
+                ReturnInstr ret = (ReturnInstr) parser.parse(false);
                 assertEquals("return 1;", ret.print());
         }
 
         @Test
         public void testVarAdd() {
-                Parser parser = new Parser("int a=1; int b=2; return a+b;");
+                Parser parser = new Parser("int a=1; int b=2; return a+b; #showGraph;");
                 ReturnInstr ret = (ReturnInstr)parser.parse(true);
                 assertEquals("return 3;", ret.print());
         }

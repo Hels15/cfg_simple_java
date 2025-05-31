@@ -14,7 +14,10 @@ public class Parser {
     private final Lexer _lexer;
 
     public static EntryBB _entry;
-    public ScopeInstr _scope;
+    public static BB _cBB; // represents the current basic block where instructions are inserted
+
+    public static ExitBB _exit;
+    public static ScopeInstr _scope;
 
     private final HashSet<String> KEYWORDS = new HashSet<>(){{
         add("int");
@@ -23,24 +26,22 @@ public class Parser {
 
     public Parser(String source) {
         _lexer = new Lexer(source);
+        _scope = new ScopeInstr();
+        _entry = new EntryBB();
+        _cBB   = new BB(); // current basic block is the entry block
+        _exit  = new ExitBB();
     }
     public Instr parse() {return parse(false);}
     public Instr parse(boolean show) {
-        EntryBB entry = new EntryBB();
 
-        _entry = entry;
+        _entry.addSuccessor(_cBB);
+        // For now no jumping instructions
+        _cBB.addSuccessor(_exit);
 
-        BB mainBB = new BB();
         var ret = parseBlock();
 
         if(!_lexer.isEOF()) throw error("Syntax error, unexpected " + _lexer.getAnyNextToken());
         if(show) showGraph();
-
-        entry.addSuccessor(mainBB);
-        mainBB.addInstr(ret);
-
-        ExitBB exitBB = new ExitBB();
-        mainBB.addSuccessor(exitBB);
 
         return ret;
     }
@@ -75,9 +76,9 @@ public class Parser {
             throw error("Undefined name '" + name + "'");
         return expr;
     }
-    private ReturnInstr parseReturn() {
+    private Instr parseReturn() {
         var expr = require(parseExpression(), ";");
-        return new ReturnInstr(expr);
+        return new ReturnInstr(expr).peephole();
     }
 
     private Instr parseBlock() {
@@ -85,6 +86,11 @@ public class Parser {
         Instr n = null;
         while(!peek('}') && !_lexer.isEOF()) {
             Instr n0 = parseStatement();
+            if(n0 instanceof ConstantInstr) {
+                // already visualised in Scope
+                continue;
+            }
+            _cBB.addInstr(n0);
             if(n0 != null) n = n0;
         }
         _scope.pop();
@@ -96,7 +102,7 @@ public class Parser {
     }
 
     private Instr showGraph() {
-        System.out.println(new GraphDot().generateDotOutput(_entry));
+        System.out.println(new GraphDot().generateDotOutput(_entry, _scope));
         return null;
     }
 
@@ -125,7 +131,11 @@ public class Parser {
     private Instr parsePrimary() {
         if( _lexer.isNumber() ) return parseIntegerLiteral();
         if( match("(") ) return require(parseExpression(), ")");
-        throw errorSyntax("integer literal");
+        String name = _lexer.matchId();
+        if(name == null) throw errorSyntax("an identifier or expression");
+        Instr n = _scope.lookup(name);
+        if(n!= null) return n;
+        throw error("Undefined name '" + name + "'");
     }
 
     private ConstantInstr parseIntegerLiteral() {
