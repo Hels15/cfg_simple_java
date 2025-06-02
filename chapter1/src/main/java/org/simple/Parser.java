@@ -37,11 +37,12 @@ public class Parser {
         _scope.push();
         _entry.addSuccessor(_cBB);
         // For now no jumping instructions
-        _cBB.addSuccessor(_exit);
 
         _scope.define(ScopeInstr.ARG0, new ConstantInstr(arg, ScopeInstr.ARG0).peephole());
 
         var ret = parseBlock();
+        // add it end the end when the graph is complete
+        _cBB.addSuccessor(_exit);
         _scope.pop();
 
         if(!_lexer.isEOF()) throw error("Syntax error, unexpected " + _lexer.getAnyNextToken());
@@ -62,10 +63,66 @@ public class Parser {
         if (matchx("return")) return parseReturn();
         else if(matchx("int")) return parseDecl();
         else if(matchx("{")) return require(parseBlock(), "}");
+        else if(matchx("if")) return parseIf();
         else if(matchx("#showGraph")) return require(showGraph(), ";");
         else if(matchx(";")) return null;
         else return parseExpressionStatement();
     }
+
+    private Instr parseIf() {
+        require("(");
+        var pred = require(parseExpression(), ")");
+
+        IfInstr if_instr = (IfInstr)new IfInstr(pred).<IfInstr>keep().peephole();
+        _cBB.addInstr(if_instr);
+
+        // true
+        BB trueBB = new BB();
+        _cBB.addSuccessor(trueBB);
+        // false
+        BB falseBB = new BB();
+        _cBB.addSuccessor(falseBB);
+
+        int ndefs = _scope.nIns();
+        ScopeInstr fScope = _scope.dup();
+
+        _cBB = trueBB; // set current BB to true branch
+        parseStatement();
+        ScopeInstr tScope = _scope;
+
+        _scope = fScope;
+        showGraph();
+        // same as ctrl(ifF) in Son context.
+
+        _cBB = falseBB; // set current BB to false branch
+
+        if (matchx("else")) {
+            parseStatement();
+            fScope = _scope;
+        }
+
+        if( tScope.nIns() != ndefs || fScope.nIns() != ndefs )
+            throw error("Cannot define a new name on one arm of an if");
+
+        _scope = tScope;
+
+        // create merge point
+        _cBB = new BB();
+        trueBB.addSuccessor(_cBB);
+        falseBB.addSuccessor(_cBB);
+
+        tScope.mergeScopes(fScope);
+
+        // add Phi to current BB from symbol table
+        for(int i = 0; i < _scope.nIns(); i++) {
+            if(_scope.in(i) != null && _scope.in(i) instanceof PhiInstr) {
+                _cBB.addInstr(_scope.in(i));
+            }
+        }
+
+        return if_instr;
+    }
+
 
     private Instr parseDecl() {
         var name = requireId();
@@ -93,6 +150,9 @@ public class Parser {
         Instr n = null;
         while(!peek('}') && !_lexer.isEOF()) {
             Instr n0 = parseStatement();
+            if(n0 instanceof ReturnInstr) {
+                System.out.print("Here");
+            }
             if(n0 instanceof ConstantInstr) {
                 // already visualised in Scope
                 continue;
@@ -149,6 +209,10 @@ public class Parser {
     private Instr parsePrimary() {
         if( _lexer.isNumber() ) return parseIntegerLiteral();
         if( match("(") ) return require(parseExpression(), ")");
+
+        if(matchx("true")) return new ConstantInstr(TypeInteger.constant(1)).peephole();
+        if(matchx("false")) return new ConstantInstr(TypeInteger.constant(0)).peephole();
+
         String name = _lexer.matchId();
         if(name == null) throw errorSyntax("an identifier or expression");
         Instr n = _scope.lookup(name);

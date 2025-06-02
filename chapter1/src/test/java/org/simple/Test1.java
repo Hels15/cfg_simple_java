@@ -177,7 +177,7 @@ public class Test1 {
 
         @Test
         public void testAdd0() {
-                Parser parser = new Parser("return 0+arg;");
+                Parser parser = new Parser("return 0+arg; #showGraph;");
                 ReturnInstr ret = (ReturnInstr)parser.parse();
                 assertEquals("return arg;", ret.print());
         }
@@ -277,5 +277,54 @@ public class Test1 {
                 ReturnInstr ret = (ReturnInstr)parser.parse();
                 assertEquals("return (arg--2);", ret.print());
         }
+        @Test
+        public void testIfStmt() {
+                Parser parser = new Parser(
+                """
+                int a = 1;
+                if (arg == 1)
+                    a = arg+2;
+                else {
+                    a = arg-3;
+                    #showGraph;
+                }
+                #showGraph;
+                return a;
+                """
+                );
+                ReturnInstr ret = (ReturnInstr)parser.parse();
+                assertEquals("return Phi((arg+2),(arg-3));", ret.print());
+        }
+        @Test
+        public void testTest() {
+                Parser parser = new Parser(
+                        """
+                        int c = 3;
+                        int b = 2;
+                        if (arg == 1) {
+                            b = 3;
+                            c = 4;
+                        }
+                        return c;""");
+                ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("return Phi(4,3);", ret.toString());
+        }
+
+        // Todo: come back to this
+        @Test
+        public void testReturn2() {
+                Parser parser = new Parser(
+                        """
+                        if( arg==1 )
+                            return 3;
+                        else
+                           return 4;
+                       #showGraph;""");
+                ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("Stop[ return 3; return 4; ]", ret.toString());
+        }
+
+
+
 }
 

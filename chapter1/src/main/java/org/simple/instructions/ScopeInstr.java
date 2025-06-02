@@ -35,6 +35,38 @@ public class ScopeInstr extends Instr{
         return sb;
     }
 
+    public String[] reverseNames() {
+        String[] names = new String[nIns()];
+        for(HashMap<String, Integer> sysms: _scopes) {
+            for(String name: sysms.keySet()) {
+                names[sysms.get(name)] = name;
+            }
+        }
+        return names;
+    }
+
+    public ScopeInstr dup() {
+        ScopeInstr dup = new ScopeInstr();
+        for(HashMap<String, Integer> sysms: _scopes) {
+            dup._scopes.push(new HashMap<>(sysms));
+        }
+        for(int i = 0; i < nIns(); i++) {
+            dup.addDef(in(i));
+        }
+        return dup;
+    }
+
+    public void mergeScopes(ScopeInstr that) {
+        String[] ns = reverseNames();
+        for(int i = 0; i < nIns(); i++) {
+            if( in(i) != that.in(i) ) { // No need for redundant Phis
+                Instr phi = new PhiInstr(ns[i], in(i), that.in(i)).peephole();
+
+                setDef(i, phi);
+            }
+        }
+        that.kill();
+    }
     @Override public Type compute() {return Type.BOTTOM;}
     @Override public Instr idealize() {return null;}
 
@@ -55,6 +87,14 @@ public class ScopeInstr extends Instr{
 
         var idx = sysm.get(name);
         if( idx == null ) return update(name,n,nestingLevel-1);
+        try {
+            //  Block of code to try
+            Instr a = in(idx);
+        }
+        catch(Exception e) {
+            //  Block of code to handle errors
+            System.out.print("Here");
+        }
         Instr old = in(idx);
 
         return n==null ? old : setDef(idx,n);

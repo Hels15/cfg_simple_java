@@ -2,6 +2,7 @@ package org.simple;
 import org.simple.bbs.BB;
 import org.simple.bbs.EntryBB;
 import org.simple.instructions.Instr;
+import org.simple.instructions.ReturnInstr;
 import org.simple.instructions.ScopeInstr;
 
 import java.util.*;
@@ -39,21 +40,24 @@ public class GraphDot {
             sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n");
 
             // smarter solution
-            if(!bb._instrs.isEmpty()) {
-                for(HashMap<String, Integer> scope: scopeA._scopes ) {
-                    for(Map.Entry<String, Integer> entrySet : scope.entrySet()) {
-                        String name = entrySet.getKey();
-                        Integer nid = entrySet.getValue();
-                        Instr instr = scopeA.in(nid);
-                        if (instr != null) {
-                            sb.append(String.format("        <TR><TD>%s: %s</TD></TR>\n", name, instr));
-                        } else {
-                            sb.append(String.format("        <TR><TD>%s: null</TD></TR>\n", name));
-                        }
-                    }
-                }
-            }
+//            if(!bb._instrs.isEmpty()) {
+//                for(HashMap<String, Integer> scope: scopeA._scopes ) {
+//                    for(Map.Entry<String, Integer> entrySet : scope.entrySet()) {
+//                        String name = entrySet.getKey();
+//                        Integer nid = entrySet.getValue();
+//                        Instr instr = scopeA.in(nid);
+//                        if (instr != null) {
+//                            sb.append(String.format("        <TR><TD>%s: %s</TD></TR>\n", name, instr));
+//                        } else {
+//                            sb.append(String.format("        <TR><TD>%s: null</TD></TR>\n", name));
+//                        }
+//                    }
+//                }
+//            }
             for (Instr instr : bb._instrs) {
+                if(instr instanceof ReturnInstr) {
+                    System.out.print("Here");
+                }
                 sb.append(String.format("        <TR><TD>i%d: %s</TD></TR>\n", instr._nid, instr.toString()));
 
             }
