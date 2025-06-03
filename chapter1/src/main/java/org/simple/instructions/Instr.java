@@ -130,9 +130,6 @@ public abstract class Instr {
     }
 
     public final Instr peephole() {
-        if(this instanceof MulInstr ) {
-            System.out.print("Here");
-        }
         Type type = _type = compute();
 
         if(_disablePeephole) return this;

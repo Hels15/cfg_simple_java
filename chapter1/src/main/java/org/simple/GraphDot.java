@@ -55,9 +55,6 @@ public class GraphDot {
 //                }
 //            }
             for (Instr instr : bb._instrs) {
-                if(instr instanceof ReturnInstr) {
-                    System.out.print("Here");
-                }
                 sb.append(String.format("        <TR><TD>i%d: %s</TD></TR>\n", instr._nid, instr.toString()));
 
             }

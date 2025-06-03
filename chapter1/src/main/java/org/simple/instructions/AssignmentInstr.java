@@ -1,0 +1,37 @@
+package org.simple.instructions;
+
+import org.simple.type.Type;
+
+// Todo: visualise type
+// Just an instruction for visualisation purposes
+public class AssignmentInstr extends Instr{
+    String _name;
+    boolean _init;
+    public AssignmentInstr(boolean init, String name, Instr expr) {
+        super(expr);
+        _name = name;
+        _init = init;
+    }
+
+    @Override
+    public String label() {
+        return _name;
+    }
+
+    @Override
+    StringBuilder _print1(StringBuilder sb) {
+        sb.append(_init ? "def " : "").append(_name).append(" = ").append(in(0).print());
+        return sb;
+    }
+
+    @Override
+    public Type compute() {
+        return null;
+    }
+
+    @Override
+    public Instr idealize() {
+        return null;
+    }
+
+}

@@ -129,6 +129,8 @@ public class Parser {
         require("=");
         var expr = require(parseExpression(), ";");
         if(_scope.define(name, expr) == null) throw error("Redefining name '" + name + "'");
+        AssignmentInstr a = new AssignmentInstr(true, name, expr);
+        _cBB.addInstr(a);
         return expr;
     }
 
@@ -138,11 +140,15 @@ public class Parser {
         var expr = require(parseExpression(), ";");
         if( _scope.update(name, expr)==null )
             throw error("Undefined name '" + name + "'");
+        AssignmentInstr a = new AssignmentInstr(false, name, expr);
+        _cBB.addInstr(a);
         return expr;
     }
     private Instr parseReturn() {
         var expr = require(parseExpression(), ";");
-        return new ReturnInstr(expr).peephole();
+        ReturnInstr ret = (ReturnInstr)new ReturnInstr(expr).peephole();
+        _cBB.addInstr(ret);
+        return ret;
     }
 
     private Instr parseBlock() {
@@ -150,15 +156,8 @@ public class Parser {
         Instr n = null;
         while(!peek('}') && !_lexer.isEOF()) {
             Instr n0 = parseStatement();
-            if(n0 instanceof ReturnInstr) {
-                System.out.print("Here");
-            }
-            if(n0 instanceof ConstantInstr) {
-                // already visualised in Scope
-                continue;
-            }
 
-            if(n0 != null) {_cBB.addInstr(n0); n = n0;}
+            if(n0 != null) {n = n0;}
         }
         _scope.pop();
         return n;
@@ -179,12 +178,32 @@ public class Parser {
 
     private Instr parseComparison() {
         var lhs = parseAddition();
-        if (match("==")) return new BoolInstr.EQ(lhs, parseComparison()).peephole();
-        if (match("!=")) return new NotInstr(new BoolInstr.EQ(lhs, parseComparison()).peephole()).peephole();
-        if (match("<=")) return new BoolInstr.LE(lhs, parseComparison()).peephole();
-        if (match("<" )) return new BoolInstr.LT(lhs, parseComparison()).peephole();
-        if (match(">=")) return new BoolInstr.LE(parseComparison(), lhs).peephole();
-        if (match(">" )) return new BoolInstr.LT(parseComparison(), lhs).peephole();
+
+        if (match("==")) {
+            var instr = new BoolInstr.EQ(lhs, parseComparison()).peephole();
+            return instr;
+        }
+        if (match("!=")) {
+            var instr = new NotInstr(new BoolInstr.EQ(lhs, parseComparison()).peephole()).peephole();
+            return instr;
+        }
+        if (match("<=")) {
+            var instr = new BoolInstr.LE(lhs, parseComparison()).peephole();
+            return instr;
+        }
+        if (match("<")) {
+            var instr = new BoolInstr.LT(lhs, parseComparison()).peephole();
+            return instr;
+        }
+        if (match(">=")) {
+            var instr = new BoolInstr.LE(parseComparison(), lhs).peephole();
+            return instr;
+        }
+        if (match(">")) {
+            var instr = new BoolInstr.LT(parseComparison(), lhs).peephole();
+            return instr;
+        }
+
         return lhs;
     }
     private Instr parseAddition() {
@@ -197,24 +216,52 @@ public class Parser {
 
     private Instr parseMultiplication() {
         var lhs = parseUnary();
-        if (match("*")) return new MulInstr(lhs, parseMultiplication()).peephole();
-        if (match("/")) return new DivInstr(lhs, parseMultiplication()).peephole();
+        if (match("*")) {
+            var instr = new MulInstr(lhs, parseMultiplication()).peephole();
+            _cBB.addInstr(instr);
+            return instr;
+        }
+
+        if (match("/")) {
+            var instr = new DivInstr(lhs, parseMultiplication()).peephole();
+            _cBB.addInstr(instr);
+            return instr;
+        }
+
         return lhs;
     }
     private Instr parseUnary() {
-        if (match("-")) return new MinusInstr(parseUnary()).peephole();
+        if (match("-")) {
+            var instr = new MinusInstr(parseUnary()).peephole();
+            _cBB.addInstr(instr);
+            return instr;
+        }
         return parsePrimary();
     }
 
     private Instr parsePrimary() {
-        if( _lexer.isNumber() ) return parseIntegerLiteral();
-        if( match("(") ) return require(parseExpression(), ")");
+        if (_lexer.isNumber()) {
+            var instr = parseIntegerLiteral();
+            return instr;
+        }
 
-        if(matchx("true")) return new ConstantInstr(TypeInteger.constant(1)).peephole();
-        if(matchx("false")) return new ConstantInstr(TypeInteger.constant(0)).peephole();
+        if (match("(")) {
+            return require(parseExpression(), ")");
+        }
+
+        if (matchx("true")) {
+            var instr = new ConstantInstr(TypeInteger.constant(1)).peephole();
+            return instr;
+        }
+
+        if (matchx("false")) {
+            var instr = new ConstantInstr(TypeInteger.constant(0)).peephole();
+            return instr;
+        }
 
         String name = _lexer.matchId();
-        if(name == null) throw errorSyntax("an identifier or expression");
+        if (name == null) throw errorSyntax("an identifier or expression");
+
         Instr n = _scope.lookup(name);
         if(n!= null) return n;
         throw error("Undefined name '" + name + "'");
