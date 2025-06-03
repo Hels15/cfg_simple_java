@@ -31,4 +31,5 @@ public class DivInstr extends Instr{
         if(in(1)._type.isConstant() && in(1)._type instanceof TypeInteger i && i.value() == 1) return in(0);
         return null;
     }
+    @Override Instr copy(Instr lhs, Instr rhs) {return new AddInstr(lhs, rhs);}
 }

@@ -1,5 +1,6 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 
 import java.util.*;
@@ -56,12 +57,12 @@ public class ScopeInstr extends Instr{
         return dup;
     }
 
-    public void mergeScopes(ScopeInstr that) {
+    public void mergeScopes(ScopeInstr that, BB cb) {
         String[] ns = reverseNames();
         for(int i = 0; i < nIns(); i++) {
             if( in(i) != that.in(i) ) { // No need for redundant Phis
                 Instr phi = new PhiInstr(ns[i], in(i), that.in(i)).peephole();
-
+                cb.addInstr(phi);
                 setDef(i, phi);
             }
         }

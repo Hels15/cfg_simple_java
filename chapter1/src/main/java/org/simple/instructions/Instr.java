@@ -1,6 +1,7 @@
 package org.simple.instructions;
 
 import org.simple.Utils;
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 
 import java.util.*;
@@ -9,6 +10,7 @@ import java.util.*;
 public abstract class Instr {
     public final int _nid;
 
+    public BB _bb; // Basic Block this instruction is in, null if not in a BB
     // for use-def chains
     public final ArrayList<Instr> _inputs;
     public Type _type;
@@ -46,6 +48,8 @@ public abstract class Instr {
 
     }
 
+    Instr copy(Instr lhs, Instr rhs) { throw Utils.TODO("Binary ops need to implement copy"); }
+
     public String uniqueName() {return label() + _nid;}
     final StringBuilder _print0(StringBuilder sb) {
         return isDead()
@@ -53,7 +57,7 @@ public abstract class Instr {
                 : _print1(sb);
     }
 
-    Instr addDef(Instr new_def) {
+    public Instr addDef(Instr new_def) {
         _inputs.add(new_def);
         if(new_def != null) new_def.addUse(this);
         return new_def;
@@ -129,6 +133,13 @@ public abstract class Instr {
         return _outputs.isEmpty();
     }
 
+    boolean allCons() {
+        for(int i = 0; i < nIns(); i++)
+            if(!(in(i)._type.isConstant()))
+                return false;
+        return true;
+    }
+
     public final Instr peephole() {
         Type type = _type = compute();
 
@@ -136,7 +147,7 @@ public abstract class Instr {
 
         // Replace constant computations from non-constants with a constant node
         if (!(this instanceof ConstantInstr) && type.isConstant()) {
-            return  deadCodeElim(new ConstantInstr(type).peephole());
+            return  deadCodeElim(new ConstantInstr(type, _bb).peephole());
         }
 
         Instr n = idealize();

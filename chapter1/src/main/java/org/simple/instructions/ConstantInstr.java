@@ -1,16 +1,18 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 
 public class ConstantInstr extends Instr {
     Type _con;
     String _label;
-    public ConstantInstr(Type type) {
-        this(type, null);
+    public ConstantInstr(Type type, BB bb) {
+        this(type, null, bb);
     }
-    public ConstantInstr(Type type, String label) {
+    public ConstantInstr(Type type, String label, BB bb) {
         _con = type;
         _label = label;
+        _bb = bb;
     }
     @Override
     public String label() {

@@ -37,4 +37,8 @@ public class MulInstr extends Instr {
 
         return null;
     }
+    @Override Instr copy(Instr lhs, Instr rhs) {
+        return new MulInstr(lhs, rhs);
+    }
+
 }

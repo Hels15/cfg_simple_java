@@ -7,7 +7,9 @@ import org.simple.instructions.*;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 
 public class Parser {
@@ -15,21 +17,26 @@ public class Parser {
 
     public static EntryBB _entry;
     public static BB _cBB; // represents the current basic block where instructions are inserted
-
     public static ExitBB _exit;
     public static ScopeInstr _scope;
 
     private final HashSet<String> KEYWORDS = new HashSet<>(){{
+        add("else");
+        add("false");
+        add("if");
         add("int");
         add("return");
+        add("true");
     }};
 
+    public ArrayList<ReturnInstr> _returns;
     public Parser(String source) {
         _lexer = new Lexer(source);
         _scope = new ScopeInstr();
         _entry = new EntryBB();
         _cBB   = new BB(); // current basic block is the entry block
         _exit  = new ExitBB();
+        _returns  = new ArrayList<>();
     }
     public Instr parse() {return parse(false);}
     public Instr parse(boolean show, TypeInteger arg) {
@@ -38,7 +45,7 @@ public class Parser {
         _entry.addSuccessor(_cBB);
         // For now no jumping instructions
 
-        _scope.define(ScopeInstr.ARG0, new ConstantInstr(arg, ScopeInstr.ARG0).peephole());
+        _scope.define(ScopeInstr.ARG0, new ConstantInstr(arg, ScopeInstr.ARG0, _cBB).peephole());
 
         var ret = parseBlock();
         // add it end the end when the graph is complete
@@ -48,7 +55,12 @@ public class Parser {
         if(!_lexer.isEOF()) throw error("Syntax error, unexpected " + _lexer.getAnyNextToken());
         if(show) showGraph();
 
-        return ret;
+        MultiReturnInstr instra = new MultiReturnInstr();
+        for(ReturnInstr r : _returns) {
+            instra.addDef(r);
+        }
+
+        return instra.peephole();
     }
     public Instr parse(boolean show) {
         return parse(show, TypeInteger.BOT);
@@ -111,14 +123,8 @@ public class Parser {
         trueBB.addSuccessor(_cBB);
         falseBB.addSuccessor(_cBB);
 
-        tScope.mergeScopes(fScope);
-
-        // add Phi to current BB from symbol table
-        for(int i = 0; i < _scope.nIns(); i++) {
-            if(_scope.in(i) != null && _scope.in(i) instanceof PhiInstr) {
-                _cBB.addInstr(_scope.in(i));
-            }
-        }
+        // add Phi to current BB
+        tScope.mergeScopes(fScope, _cBB);
 
         return if_instr;
     }
@@ -144,17 +150,19 @@ public class Parser {
         _cBB.addInstr(a);
         return expr;
     }
+
     private Instr parseReturn() {
         var expr = require(parseExpression(), ";");
         ReturnInstr ret = (ReturnInstr)new ReturnInstr(expr).peephole();
         _cBB.addInstr(ret);
+        _returns.add(ret);
         return ret;
     }
 
     private Instr parseBlock() {
         _scope.push();
         Instr n = null;
-        while(!peek('}') && !_lexer.isEOF()) {
+        while (!peek('}') && !_lexer.isEOF()) {
             Instr n0 = parseStatement();
 
             if(n0 != null) {n = n0;}
@@ -250,12 +258,12 @@ public class Parser {
         }
 
         if (matchx("true")) {
-            var instr = new ConstantInstr(TypeInteger.constant(1)).peephole();
+            var instr = new ConstantInstr(TypeInteger.constant(1), _cBB).peephole();
             return instr;
         }
 
         if (matchx("false")) {
-            var instr = new ConstantInstr(TypeInteger.constant(0)).peephole();
+            var instr = new ConstantInstr(TypeInteger.constant(0), _cBB).peephole();
             return instr;
         }
 
@@ -268,7 +276,7 @@ public class Parser {
     }
 
     private ConstantInstr parseIntegerLiteral() {
-        return (ConstantInstr) new ConstantInstr(_lexer.parseNumber()).peephole();
+        return (ConstantInstr) new ConstantInstr(_lexer.parseNumber(), _cBB).peephole();
     }
 
     private boolean matchx(String syntax) { return _lexer.matchx(syntax); }

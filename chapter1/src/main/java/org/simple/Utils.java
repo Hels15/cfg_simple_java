@@ -18,4 +18,5 @@ public class Utils {
                 return i;
         return -1;
     }
+    public static RuntimeException TODO(String msg) { return new RuntimeException(msg); }
 }

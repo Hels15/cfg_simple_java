@@ -28,18 +28,42 @@ public class PhiInstr extends Instr{
 
     @Override
     public Instr idealize() {
-        // Todo: only works with two inputs
         if(same_inputs()) return in(0);
-        // Todo: extend it here
+
+        Instr op = in(0);
+
+        // Pull "down" a common data op.  One less op in the world.  One more
+        // Phi, but Phis do not make code.
+        //   Phi(op(A,B),op(Q,R),op(X,Y)) becomes
+        //     op(Phi(A,Q,X), Phi(B,R,Y)).
+        if(op.nIns() == 2 && same_op()) {
+            Instr[] lhss = new Instr[nIns()];
+            Instr[] rhss = new Instr[nIns()];
+            for( int i=0; i<nIns(); i++ ) {
+                lhss[i] = in(i).in(0);
+                rhss[i] = in(i).in(1);
+            }
+            Instr phi_lhs = new PhiInstr(_label,lhss).peephole();
+            Instr phi_rhs = new PhiInstr(_label,rhss).peephole();
+            return op.copy(phi_lhs,phi_rhs);
+        }
+
         return null;
     }
 
     private boolean same_inputs() {
-        for(int i = 0; i < nIns(); i++) {
-            if(in(1) != in(i)) {
+        for(int i = 1; i < nIns(); i++) {
+            if(in(0) != in(i)) {
                 return false;
             }
         }
+        return true;
+    }
+
+    private boolean same_op() {
+        for( int i=1; i<nIns(); i++ )
+            if( in(0).getClass() != in(i).getClass() )
+                return false;
         return true;
     }
 

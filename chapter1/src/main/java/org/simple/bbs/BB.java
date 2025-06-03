@@ -36,6 +36,7 @@ public class BB {
     public void addInstr(Instr instr) {
         if (!_instrs.contains(instr)) {
             _instrs.add(instr);
+            instr._bb = this;
         }
     }
 

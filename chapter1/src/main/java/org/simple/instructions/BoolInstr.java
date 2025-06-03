@@ -38,13 +38,13 @@ abstract public class BoolInstr extends Instr{
     public Instr idealize() {
         // Compare of same
         if( in(0)==in(1) )
-            return new ConstantInstr(TypeInteger.constant(doOp(3,3)?1:0));
+            return new ConstantInstr(TypeInteger.constant(doOp(3,3)?1:0), _bb);
 
         return null;
     }
 
-    public static class EQ extends BoolInstr { public EQ(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "=="; } boolean doOp(long lhs, long rhs) { return lhs == rhs; } }
-    public static class LT extends BoolInstr { public LT(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "<" ; } boolean doOp(long lhs, long rhs) { return lhs <  rhs; } }
-    public static class LE extends BoolInstr { public LE(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "<="; } boolean doOp(long lhs, long rhs) { return lhs <= rhs; } }
+    public static class EQ extends BoolInstr { public EQ(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "=="; } boolean doOp(long lhs, long rhs) { return lhs == rhs; } Instr copy(Instr lhs, Instr rhs) {return new EQ(lhs, rhs);} }
+    public static class LT extends BoolInstr { public LT(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "<" ; } boolean doOp(long lhs, long rhs) { return lhs <  rhs; } Instr copy(Instr lhs, Instr rhs) {return new LT(lhs, rhs);}}
+    public static class LE extends BoolInstr { public LE(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "<="; } boolean doOp(long lhs, long rhs) { return lhs <= rhs; } Instr copy(Instr lhs, Instr rhs) {return new LE(lhs, rhs);}}
 
 }

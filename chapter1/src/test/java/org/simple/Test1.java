@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.simple.bbs.BB;
 import org.simple.bbs.EntryBB;
 import org.simple.instructions.Instr;
+import org.simple.instructions.MultiReturnInstr;
 import org.simple.instructions.ReturnInstr;
 import org.simple.type.TypeInteger;
 
@@ -320,11 +321,150 @@ public class Test1 {
                         else
                            return 4;
                        #showGraph;""");
+                MultiReturnInstr ret = (MultiReturnInstr) parser.parse(true, TypeInteger.BOT);
+                assertEquals("[return 3; return 4;]", ret.toString());
+        }
+
+        @Test
+        public void testIfMergeB() {
+                Parser parser = new Parser(
+                        """
+                        int a=arg+1;
+                        int b=0;
+                        if( arg==1 )
+                            b=a;
+                        else
+                            b=a+1;
+                        return a+b;""");
                 ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
-                assertEquals("Stop[ return 3; return 4; ]", ret.toString());
+                assertEquals("return ((arg*2)+Phi(2,3));", ret.toString());
         }
 
 
+        @Test
+        public void testIfMerge2() {
+                Parser parser = new Parser(
+                        """
+                        int a=arg+1;
+                        int b=arg+2;
+                        if( arg==1 )
+                            b=b+a;
+                        else
+                            a=b+1;
+                        return a+b;""");
+                ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("return ((Phi((arg*2),arg)+arg)+Phi(4,5));", ret.toString());
+        }
 
+        @Test
+        public void testIfMerge4() {
+                Parser parser = new Parser(
+                        """
+                int a=0;
+                int b=0;
+                if( arg )
+                    a=1;
+                if( arg==0 )
+                    b=2;
+                return arg+a+b;
+                #showGraph;""");
+                ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("return ((arg+Phi(1,0))+Phi(2,0));", ret.toString());
+        }
+
+        @Test
+        public void testIfMerge5 (){
+                Parser parser = new Parser(
+                        """
+                int a=arg==2;
+                if( arg==1 )
+                {
+                    a=arg==3;
+                }
+                return a;""");
+                ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("return (arg==Phi(3,2));", ret.toString());
+        }
+
+        @Test
+        public void testTrue (){
+                Parser parser = new Parser(
+                        """
+                return true;
+                """);
+                ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("return 1;", ret.toString());
+        }
+
+        @Test
+        public void testHalfDef() {
+                try {
+                        new Parser("if( arg==1 ) int b=2; return b;").parse();
+                        fail();
+                } catch( RuntimeException e ) {
+                        assertEquals("Cannot define a new name on one arm of an if",e.getMessage());
+                }
+        }
+
+        @Test
+        public void testHalfDef2() {
+                try {
+                        new Parser("if( arg==1 ) { int b=2; } else { int b=3; } return b;").parse();
+                        fail();
+                } catch( RuntimeException e ) {
+                        assertEquals("Undefined name 'b'",e.getMessage());
+                }
+        }
+
+        @Test
+        public void testRegress1() {
+                try {
+                        new Parser("if(arg==2) int a=1; else int b=2; return a;").parse();
+                        fail();
+                } catch( RuntimeException e ) {
+                        assertEquals("Cannot define a new name on one arm of an if",e.getMessage());
+                }
+        }
+
+
+        @Test
+        public void testBadNum() {
+                try {
+                        new Parser("return 1-;").parse();
+                        fail();
+                } catch( RuntimeException e ) {
+                        assertEquals("Syntax error, expected an identifier or expression: ;",e.getMessage());
+                }
+        }
+
+        @Test
+        public void testKeyword1() {
+                try {
+                        new Parser("int true=0; return true;").parse();
+                        fail();
+                } catch( RuntimeException e ) {
+                        assertEquals("Expected an identifier, found 'true'",e.getMessage());
+                }
+        }
+
+        @Test
+        public void testKeyword2() {
+                try {
+                        new Parser("int else=arg; if(else) else=2; else else=1; return else;").parse();
+                        fail();
+                } catch( RuntimeException e ) {
+                        assertEquals("Expected an identifier, found 'else'",e.getMessage());
+                }
+        }
+
+        @Test
+        public void testKeyword3() {
+                try {
+                        new Parser("int a=1; ififif(arg)inta=2;return a;").parse();
+                        fail();
+                } catch( RuntimeException e ) {
+                        assertEquals("Syntax error, expected =: (",e.getMessage());
+                }
+        }
 }
 
