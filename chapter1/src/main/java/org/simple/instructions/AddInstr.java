@@ -44,7 +44,6 @@ public class AddInstr extends Instr{
         if( lhs.in(1)._type.isConstant() && t2.isConstant() )
             return new AddInstr(lhs.in(0),new AddInstr(lhs.in(1),rhs).peephole());
 
-
         if( lhs.in(1) instanceof PhiInstr phi && phi.allCons() &&
                 // Do we have ((x + (phi cons)) + con) ?
                 // Do we have ((x + (phi cons)) + (phi cons)) ?

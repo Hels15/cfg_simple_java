@@ -95,6 +95,7 @@ public abstract class Instr {
 
     boolean isDead() { return isUnused() && nIns()==0 && _type==null; }
 
+
     void popN(int n ) {
         for (int i = 0; i < n; i++) {
             Instr old_def = _inputs.removeLast();
@@ -120,6 +121,14 @@ public abstract class Instr {
     protected <I extends Instr> I addUse(Instr n) {
         _outputs.add(n);
         return (I)this;
+    }
+
+    void delDef(int idx) {
+        Instr old_def = in(idx);
+        if(old_def != null && old_def.delUse(this)) {
+            old_def.kill();
+        }
+        Utils.del(_inputs, idx);
     }
 
     Instr swap12() {

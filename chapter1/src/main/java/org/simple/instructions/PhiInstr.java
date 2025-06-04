@@ -23,7 +23,10 @@ public class PhiInstr extends Instr{
 
     @Override
     public Type compute() {
-        return Type.BOTTOM;
+        Type t = Type.TOP;
+        for(int i = 1; i < nIns(); i++)
+            t = t.meet(in(i)._type);
+        return t;
     }
 
     @Override

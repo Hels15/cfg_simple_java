@@ -372,6 +372,22 @@ public class Test1 {
                 assertEquals("return ((arg+Phi(1,0))+Phi(2,0));", ret.toString());
         }
 
+        // Same merge point
+        @Test
+        public void relatedPhiS() {
+                Parser parser = new Parser("""
+                int a = 1;
+                int b = 2;
+                if(arg == 1) {
+                   a = 3;
+                   b = 4;
+                }
+                #showGraph;
+                return arg+a+b;
+                """);
+                ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("return (arg+Phi(7, 3);", ret.toString());
+        }
         @Test
         public void testIfMerge5 (){
                 Parser parser = new Parser(
