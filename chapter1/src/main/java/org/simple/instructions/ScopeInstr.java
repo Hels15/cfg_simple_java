@@ -61,7 +61,7 @@ public class ScopeInstr extends Instr{
         String[] ns = reverseNames();
         for(int i = 0; i < nIns(); i++) {
             if( in(i) != that.in(i) ) { // No need for redundant Phis
-                Instr phi = new PhiInstr(ns[i], in(i), that.in(i)).peephole();
+                Instr phi = new PhiInstr(cb, ns[i], in(i), that.in(i)).peephole();
                 cb.addInstr(phi);
                 setDef(i, phi);
             }
@@ -88,14 +88,7 @@ public class ScopeInstr extends Instr{
 
         var idx = sysm.get(name);
         if( idx == null ) return update(name,n,nestingLevel-1);
-        try {
-            //  Block of code to try
-            Instr a = in(idx);
-        }
-        catch(Exception e) {
-            //  Block of code to handle errors
-            System.out.print("Here");
-        }
+
         Instr old = in(idx);
 
         return n==null ? old : setDef(idx,n);

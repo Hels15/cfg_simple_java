@@ -1,10 +1,11 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
 public class AddInstr extends Instr{
-    public AddInstr(Instr lhs, Instr rhs) {super(lhs, rhs);}
+    public AddInstr(BB c, Instr lhs, Instr rhs) {super(lhs, rhs); _bb = c;}
     @Override public String label() {
         return "Add";
     }
@@ -29,20 +30,20 @@ public class AddInstr extends Instr{
         if(t2 instanceof TypeInteger i && i.value() == 0) return lhs;
 
         if(lhs == rhs) {
-            return new MulInstr(lhs, new ConstantInstr(TypeInteger.constant(2), _bb).peephole());
+            return new MulInstr(_bb, lhs, new ConstantInstr(TypeInteger.constant(2), _bb).peephole());
         }
         if(!(lhs instanceof AddInstr) && rhs instanceof AddInstr) {
             return swap12();
         }
 
         if( rhs instanceof AddInstr add )
-            return new AddInstr(new AddInstr(lhs,add.in(0)).peephole(), add.in(1));
+            return new AddInstr(_bb, new AddInstr(_bb, lhs,add.in(0)).peephole(), add.in(1));
 
         if( !(lhs instanceof AddInstr) )
             return spline_cmp(lhs,rhs) ? swap12() : null;
 
         if( lhs.in(1)._type.isConstant() && t2.isConstant() )
-            return new AddInstr(lhs.in(0),new AddInstr(lhs.in(1),rhs).peephole());
+            return new AddInstr(_bb, lhs.in(0),new AddInstr(_bb, lhs.in(1),rhs).peephole());
 
         if( lhs.in(1) instanceof PhiInstr phi && phi.allCons() &&
                 // Do we have ((x + (phi cons)) + con) ?
@@ -56,13 +57,13 @@ public class AddInstr extends Instr{
             Instr[] ns = new Instr[phi.nIns()];
             // Push constant up through the phi: x + (phi con0+con0 con1+con1...)
             for( int i=0; i<ns.length; i++ )
-                ns[i] = new AddInstr(phi.in(i),t2.isConstant() ? rhs : rhs.in(i)).peephole();
+                ns[i] = new AddInstr(_bb, phi.in(i),t2.isConstant() ? rhs : rhs.in(i)).peephole();
             String label = phi._label + (rhs instanceof PhiInstr rphi ? rphi._label : "");
-            return new AddInstr(lhs.in(0),new PhiInstr(label,ns).peephole());
+            return new AddInstr(_bb, lhs.in(0),new PhiInstr(_bb, label,ns).peephole());
         }
 
         if( spline_cmp(lhs.in(1),rhs) )
-            return new AddInstr(new AddInstr(lhs.in(0),rhs).peephole(),lhs.in(1));
+            return new AddInstr(_bb, new AddInstr(_bb, lhs.in(0),rhs).peephole(),lhs.in(1));
 
         return null;
     }
@@ -87,6 +88,6 @@ public class AddInstr extends Instr{
         return sb.append(")");
     }
 
-    @Override Instr copy(Instr lhs, Instr rhs) {return new AddInstr(lhs, rhs);}
+    @Override Instr copy(BB c, Instr lhs, Instr rhs) {return new AddInstr(c, lhs, rhs);}
 
 }

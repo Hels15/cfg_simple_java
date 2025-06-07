@@ -294,8 +294,9 @@ public class Test1 {
                 """
                 );
                 ReturnInstr ret = (ReturnInstr)parser.parse();
-                assertEquals("return Phi((arg+2),(arg-3));", ret.print());
+                assertEquals("return Phi(bb6,(arg+2),(arg-3));", ret.print());
         }
+        // Todo: should be phi node
         @Test
         public void testTest() {
                 Parser parser = new Parser(
@@ -308,10 +309,9 @@ public class Test1 {
                         }
                         return c;""");
                 ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
-                assertEquals("return Phi(4,3);", ret.toString());
+                assertEquals("return Phi(bb6,4,3);", ret.toString());
         }
-
-        // Todo: come back to this
+        
         @Test
         public void testReturn2() {
                 Parser parser = new Parser(
@@ -337,7 +337,7 @@ public class Test1 {
                             b=a+1;
                         return a+b;""");
                 ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
-                assertEquals("return ((arg*2)+Phi(2,3));", ret.toString());
+                assertEquals("return ((arg*2)+Phi(bb6,2,3));", ret.toString());
         }
 
 
@@ -353,7 +353,7 @@ public class Test1 {
                             a=b+1;
                         return a+b;""");
                 ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
-                assertEquals("return ((Phi((arg*2),arg)+arg)+Phi(4,5));", ret.toString());
+                assertEquals("return ((Phi(bb6,(arg*2),arg)+arg)+Phi(bb6,4,5));", ret.toString());
         }
 
         @Test
@@ -369,7 +369,7 @@ public class Test1 {
                 return arg+a+b;
                 #showGraph;""");
                 ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
-                assertEquals("return ((arg+Phi(1,0))+Phi(2,0));", ret.toString());
+                assertEquals("return ((arg+Phi(bb6,1,0))+Phi(bb9,2,0));", ret.toString());
         }
 
         // Same merge point
@@ -386,7 +386,7 @@ public class Test1 {
                 return arg+a+b;
                 """);
                 ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
-                assertEquals("return (arg+Phi(7, 3);", ret.toString());
+                assertEquals("return (arg+Phi(bb6,7,3));", ret.toString());
         }
         @Test
         public void testIfMerge5 (){
@@ -399,7 +399,7 @@ public class Test1 {
                 }
                 return a;""");
                 ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
-                assertEquals("return (arg==Phi(3,2));", ret.toString());
+                assertEquals("return (arg==Phi(bb6,3,2));", ret.toString());
         }
 
         @Test
@@ -482,5 +482,308 @@ public class Test1 {
                         assertEquals("Syntax error, expected =: (",e.getMessage());
                 }
         }
+
+        // should just make this return: return1
+        @Test
+        public void testIf() {
+                Parser parser = new Parser("""
+                if( true ) return 2;
+                return 1;
+                """);
+                Instr._disablePeephole = true;
+                Instr._disablePasses = true;
+                MultiReturnInstr ret = (MultiReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("[return 2; return 1;]", ret.toString());
+        }
+
+        @Test public void testIfPeephole() {
+                Parser parser = new Parser("""
+                                        if( true ) return 2;
+                                        return 1;
+                        """);
+                ReturnInstr ret = (ReturnInstr)parser.parse(true, TypeInteger.BOT);
+                assertEquals("return 2;", ret.toString());
+        }
+
+        // Todo: implement it from here, rotation, dominators, if shortcut
+        @Test public void testPeepholeRotate() {
+                Parser parser = new Parser(
+                        """
+                                int a = 1;
+                                if (arg)
+                                    a = 2;
+                                return (arg < a) < 3;
+                                """
+                );
+                ReturnInstr instr = (ReturnInstr) parser.parse(true, TypeInteger.BOT);
+                assertEquals("return ((arg<Phi(2,1))<3);", instr.toString());
+        }
+
+        @Test
+        public void testPeepholeCFG() {
+                Parser parser = new Parser(
+                        """
+                        int a=1;
+                        if( true )
+                          a=2;
+                        else
+                          a=3;
+                        return a;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return 2;", instr.toString());
+        }
+
+        @Test
+        public void testIfIf() {
+                Parser parser = new Parser(
+                        """
+                        int a=1;
+                        if( arg!=1 )
+                            a=2;
+                        else
+                            a=3;
+                        int b=4;
+                        if( a==2 )
+                            b=42;
+                        else
+                            b=5;
+                        return b;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(42,5);", instr.toString());
+        }
+
+        @Test
+        public void testIfArgIf() {
+                Parser parser = new Parser(
+                        """
+                        int a=1;
+                        if( 1==1 )
+                            a=2;
+                        else
+                            a=3;
+                        int b=4;
+                        if( arg==2 )
+                            b=a;
+                        else
+                            b=5;
+                        return b;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(2,5);", instr.toString());
+        }
+
+        @Test
+        public void testMerge3With2() {
+                Parser parser = new Parser(
+                        """
+                        int a=1;
+                        if( arg==1 )
+                            if( arg==2 )
+                                a=2;
+                            else
+                                a=3;
+                        else if( arg==3 )
+                            a=4;
+                        else
+                            a=5;
+                        return a;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return 5;", instr.toString());
+        }
+
+        @Test
+        public void testMerge3With1() {
+                Parser parser = new Parser(
+                        """
+                        int a=1;
+                        if( arg==1 )
+                            if( arg==2 )
+                                a=2;
+                            else
+                                a=3;
+                        else if( arg==3 )
+                            a=4;
+                        else
+                            a=5;
+                        return a;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return 3;", instr.toString());
+        }
+
+        @Test
+        public void testMerge3Peephole() {
+                Parser parser = new Parser(
+                        """
+                        int a=1;
+                        if( arg==1 )
+                            if( 1==2 )
+                                a=2;
+                            else
+                                a=3;
+                        else if( arg==3 )
+                            a=4;
+                        else
+                            a=5;
+                        return a;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(3,Phi(4,5));", instr.toString());
+        }
+
+        @Test
+        public void testMerge3Peephole1() {
+                Parser parser = new Parser(
+                        """
+                        int a=1;
+                        if( arg==1 )
+                            if( 1==2 )
+                                a=2;
+                            else
+                                a=3;
+                        else if( arg==3 )
+                            a=4;
+                        else
+                            a=5;
+                        return a;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true, TypeInteger.constant(1));
+                assertEquals("return 3;", instr.toString());
+        }
+
+
+        @Test
+        public void testMerge3Peephole3() {
+                Parser parser = new Parser(
+                        """
+                        int a=1;
+                        if( arg==1 )
+                            if( 1==2 )
+                                a=2;
+                            else
+                                a=3;
+                        else if( arg==3 )
+                            a=4;
+                        else
+                            a=5;
+                        return a;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true, TypeInteger.constant(3));
+                assertEquals("return 4;", instr.toString());
+        }
+
+        @Test
+        public void testDemo1NonConst() {
+                Parser parser = new Parser(
+                        """
+                   
+                        int a = 0;
+                        int b = 1;
+                        if( arg ) {
+                            a = 2;
+                            if( arg ) { b = 2; }
+                            else b = 3;
+                        }
+                        return a+b;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(4,1);", instr.toString());
+        }
+
+        @Test
+        public void testDemo1True() {
+                Parser parser = new Parser(
+                        """
+                  
+                        int a = 0;
+                        int b = 1;
+                        if( arg ) {
+                            a = 2;
+                            if( arg ) { b = 2; }
+                            else b = 3;
+                        }
+                        return a+b;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(1));
+                assertEquals("return 4;", instr.toString());
+        }
+
+        @Test
+        public void testDemo1False() {
+                Parser parser = new Parser(
+                        """
+                        int a = 0;
+                        int b = 1;
+                        if( arg ) {
+                            a = 2;
+                            if( arg ) { b = 2; }
+                            else b = 3;
+                        }
+                        return a+b;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(0));
+                assertEquals("return 1;", instr.toString());
+        }
+
+        @Test
+        public void testDemo2NonConst() {
+                Parser parser = new Parser(
+                        """
+                        int a = 0;
+                        int b = 1;
+                        int c = 0;
+                        if( arg ) {
+                            a = 1;
+                            if( arg==2 ) { c=2; } else { c=3; }
+                            if( arg ) { b = 2; }
+                            else b = 3;
+                        }
+                        return a+b+c;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
+                assertEquals("return (Phi(Phi(2,3),0)+Phi(3,1))", instr.toString());
+        }
+
+        @Test
+        public void testDemo2True() {
+                Parser parser = new Parser(
+                        """
+                        int a = 0;
+                        int b = 1;
+                        int c = 0;
+                        if( arg ) {
+                            a = 1;
+                            if( arg==2 ) { c=2; } else { c=3; }
+                            if( arg ) { b = 2; }
+                            else b = 3;
+                        }
+                        return a+b+c;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(1));
+                assertEquals("return (Phi(Phi(2,3),0)+Phi(3,1))", instr.toString());
+        }
+
+        @Test
+        public void testDemo2arg2() {
+                Parser parser = new Parser(
+                        """
+                        int a = 0;
+                        int b = 1;
+                        int c = 0;
+                        if( arg ) {
+                        a = 1;
+                        if( arg==2 ) { c=2; } else { c=3; }
+                        if( arg ) { b = 2; }
+                        else b = 3;
+                        }
+                        return a+b+c;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                assertEquals("return 5;", instr.toString());
+        }
+
 }
 

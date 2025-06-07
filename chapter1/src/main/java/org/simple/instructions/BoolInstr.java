@@ -1,12 +1,14 @@
 package org.simple.instructions;
 
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
 abstract public class BoolInstr extends Instr{
-    public BoolInstr(Instr lhs, Instr rhs) {
+    public BoolInstr(BB c, Instr lhs, Instr rhs) {
         super(lhs, rhs);
+        _bb = c;
     }
     abstract String op();       // String opcode name
 
@@ -43,8 +45,8 @@ abstract public class BoolInstr extends Instr{
         return null;
     }
 
-    public static class EQ extends BoolInstr { public EQ(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "=="; } boolean doOp(long lhs, long rhs) { return lhs == rhs; } Instr copy(Instr lhs, Instr rhs) {return new EQ(lhs, rhs);} }
-    public static class LT extends BoolInstr { public LT(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "<" ; } boolean doOp(long lhs, long rhs) { return lhs <  rhs; } Instr copy(Instr lhs, Instr rhs) {return new LT(lhs, rhs);}}
-    public static class LE extends BoolInstr { public LE(Instr lhs, Instr rhs) { super(lhs,rhs); } String op() { return "<="; } boolean doOp(long lhs, long rhs) { return lhs <= rhs; } Instr copy(Instr lhs, Instr rhs) {return new LE(lhs, rhs);}}
+    public static class EQ extends BoolInstr { public EQ(BB c, Instr lhs, Instr rhs) { super(c, lhs,rhs); } String op() { return "=="; } boolean doOp(long lhs, long rhs) { return lhs == rhs; } Instr copy(BB c, Instr lhs, Instr rhs) {return new EQ(c, lhs, rhs);} }
+    public static class LT extends BoolInstr { public LT(BB c, Instr lhs, Instr rhs) { super(c, lhs,rhs); } String op() { return "<" ; } boolean doOp(long lhs, long rhs) { return lhs <  rhs; } Instr copy(BB c, Instr lhs, Instr rhs) {return new LT(c, lhs, rhs);}}
+    public static class LE extends BoolInstr { public LE(BB c, Instr lhs, Instr rhs) { super(c, lhs,rhs); } String op() { return "<="; } boolean doOp(long lhs, long rhs) { return lhs <= rhs; } Instr copy(BB c, Instr lhs, Instr rhs) {return new LE(c, lhs, rhs);}}
 
 }

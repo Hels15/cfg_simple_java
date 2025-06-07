@@ -19,7 +19,7 @@ public class Parser {
     public static BB _cBB; // represents the current basic block where instructions are inserted
     public static ExitBB _exit;
     public static ScopeInstr _scope;
-
+    public static PassManager _pass;
     private final HashSet<String> KEYWORDS = new HashSet<>(){{
         add("else");
         add("false");
@@ -37,6 +37,7 @@ public class Parser {
         _cBB   = new BB(); // current basic block is the entry block
         _exit  = new ExitBB();
         _returns  = new ArrayList<>();
+        _pass = new PassManager();
     }
     public Instr parse() {return parse(false);}
     public Instr parse(boolean show, TypeInteger arg) {
@@ -49,17 +50,24 @@ public class Parser {
 
         var ret = parseBlock();
         // add it end the end when the graph is complete
-        _cBB.addSuccessor(_exit);
         _scope.pop();
 
         if(!_lexer.isEOF()) throw error("Syntax error, unexpected " + _lexer.getAnyNextToken());
-        if(show) showGraph();
 
-        MultiReturnInstr instra = new MultiReturnInstr();
+        MultiReturnInstr instra = new MultiReturnInstr(_cBB);
+
+        // Run pass manager to clean up dead bbs
+        if(!Instr._disablePasses) {
+             _pass.bb_dead(_entry);
+            _pass.combine(_entry);
+        }
+        // collect now returns from new graph
+//        _pass.collect_returns(_entry, _returns);
+
         for(ReturnInstr r : _returns) {
             instra.addDef(r);
         }
-
+        if(show) showGraph();
         return instra.peephole();
     }
     public Instr parse(boolean show) {
@@ -85,28 +93,21 @@ public class Parser {
         require("(");
         var pred = require(parseExpression(), ")");
 
-        IfInstr if_instr = (IfInstr)new IfInstr(pred).<IfInstr>keep().peephole();
+        IfInstr if_instr = (IfInstr)new IfInstr(_cBB, pred).<IfInstr>keep().peephole();
         _cBB.addInstr(if_instr);
-
-        // true
-        BB trueBB = new BB();
-        _cBB.addSuccessor(trueBB);
-        // false
-        BB falseBB = new BB();
-        _cBB.addSuccessor(falseBB);
+        if_instr.create_bbs(_cBB);
 
         int ndefs = _scope.nIns();
         ScopeInstr fScope = _scope.dup();
 
-        _cBB = trueBB; // set current BB to true branch
+        _cBB = if_instr.true_bb(); // set current BB to true branch
         parseStatement();
         ScopeInstr tScope = _scope;
 
         _scope = fScope;
-        showGraph();
         // same as ctrl(ifF) in Son context.
 
-        _cBB = falseBB; // set current BB to false branch
+        _cBB = if_instr.false_bb(); // set current BB to false branch
 
         if (matchx("else")) {
             parseStatement();
@@ -120,8 +121,8 @@ public class Parser {
 
         // create merge point
         _cBB = new BB();
-        trueBB.addSuccessor(_cBB);
-        falseBB.addSuccessor(_cBB);
+        if_instr.true_bb().addSuccessor(_cBB);
+        if_instr.false_bb().addSuccessor(_cBB);
 
         // add Phi to current BB
         tScope.mergeScopes(fScope, _cBB);
@@ -153,9 +154,19 @@ public class Parser {
 
     private Instr parseReturn() {
         var expr = require(parseExpression(), ";");
-        ReturnInstr ret = (ReturnInstr)new ReturnInstr(expr).peephole();
+        ReturnInstr ret = (ReturnInstr)new ReturnInstr(_cBB, expr).peephole();
         _cBB.addInstr(ret);
-        _returns.add(ret);
+
+        // Todo: Better solution  - maybe need graph to collect return after all optimisations
+        // Todo: see collect return for the current attempt
+        if(!Instr._disablePeephole) {
+            if(_cBB._type != Type.XCONTROL) _returns.add(ret);
+        } else {
+            _returns.add(ret);
+        }
+
+        _cBB.addSuccessor(_exit);
+
         return ret;
     }
 
@@ -188,27 +199,27 @@ public class Parser {
         var lhs = parseAddition();
 
         if (match("==")) {
-            var instr = new BoolInstr.EQ(lhs, parseComparison()).peephole();
+            var instr = new BoolInstr.EQ(_cBB, lhs, parseComparison()).peephole();
             return instr;
         }
         if (match("!=")) {
-            var instr = new NotInstr(new BoolInstr.EQ(lhs, parseComparison()).peephole()).peephole();
+            var instr = new NotInstr(_cBB, new BoolInstr.EQ(_cBB, lhs, parseComparison()).peephole()).peephole();
             return instr;
         }
         if (match("<=")) {
-            var instr = new BoolInstr.LE(lhs, parseComparison()).peephole();
+            var instr = new BoolInstr.LE(_cBB, lhs, parseComparison()).peephole();
             return instr;
         }
         if (match("<")) {
-            var instr = new BoolInstr.LT(lhs, parseComparison()).peephole();
+            var instr = new BoolInstr.LT(_cBB, lhs, parseComparison()).peephole();
             return instr;
         }
         if (match(">=")) {
-            var instr = new BoolInstr.LE(parseComparison(), lhs).peephole();
+            var instr = new BoolInstr.LE(_cBB, parseComparison(), lhs).peephole();
             return instr;
         }
         if (match(">")) {
-            var instr = new BoolInstr.LT(parseComparison(), lhs).peephole();
+            var instr = new BoolInstr.LT(_cBB, parseComparison(), lhs).peephole();
             return instr;
         }
 
@@ -217,21 +228,21 @@ public class Parser {
     private Instr parseAddition() {
         var lhs = parseMultiplication();
 
-        if (match("+")) return new AddInstr(lhs, parseAddition()).peephole();
-        if (match("-")) return new SubInstr(lhs, parseAddition()).peephole();
+        if (match("+")) return new AddInstr(_cBB, lhs, parseAddition()).peephole();
+        if (match("-")) return new SubInstr(_cBB, lhs, parseAddition()).peephole();
         return lhs;
     }
 
     private Instr parseMultiplication() {
         var lhs = parseUnary();
         if (match("*")) {
-            var instr = new MulInstr(lhs, parseMultiplication()).peephole();
+            var instr = new MulInstr(_cBB, lhs, parseMultiplication()).peephole();
             _cBB.addInstr(instr);
             return instr;
         }
 
         if (match("/")) {
-            var instr = new DivInstr(lhs, parseMultiplication()).peephole();
+            var instr = new DivInstr(_cBB, lhs, parseMultiplication()).peephole();
             _cBB.addInstr(instr);
             return instr;
         }
@@ -240,7 +251,7 @@ public class Parser {
     }
     private Instr parseUnary() {
         if (match("-")) {
-            var instr = new MinusInstr(parseUnary()).peephole();
+            var instr = new MinusInstr(_cBB, parseUnary()).peephole();
             _cBB.addInstr(instr);
             return instr;
         }

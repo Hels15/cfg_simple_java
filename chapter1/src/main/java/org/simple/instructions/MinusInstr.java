@@ -1,10 +1,11 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
 public class MinusInstr extends Instr{
-    public MinusInstr(Instr in) {super(in);}
+    public MinusInstr(BB c, Instr in) {super(in); _bb = c;}
     @Override public String label() {
         return "Minus";
     }

@@ -16,6 +16,7 @@ public abstract class Instr {
     public Type _type;
 
     public static boolean _disablePeephole = false;
+    public static boolean _disablePasses = false;
 
     public final ArrayList<Instr> _outputs;
 
@@ -48,7 +49,7 @@ public abstract class Instr {
 
     }
 
-    Instr copy(Instr lhs, Instr rhs) { throw Utils.TODO("Binary ops need to implement copy"); }
+    Instr copy(BB c, Instr lhs, Instr rhs) { throw Utils.TODO("Binary ops need to implement copy"); }
 
     public String uniqueName() {return label() + _nid;}
     final StringBuilder _print0(StringBuilder sb) {

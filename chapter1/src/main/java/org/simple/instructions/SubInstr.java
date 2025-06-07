@@ -1,10 +1,11 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
 public class SubInstr extends Instr{
-    public SubInstr(Instr lhs, Instr rhs) {super(lhs, rhs);}
+    public SubInstr(BB c, Instr lhs, Instr rhs) {super(lhs, rhs); _bb = c;}
     public @Override String label() {
         return "Sub";
     }

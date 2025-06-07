@@ -1,10 +1,11 @@
 package org.simple.instructions;
 
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 
 public class ReturnInstr extends Instr {
-    public ReturnInstr(Instr data) {super(data);}
+    public ReturnInstr(BB c, Instr data) {super(data); _bb = c;}
     @Override
     public String label() {
         return "Return";

@@ -1,19 +1,25 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 
 public class PhiInstr extends Instr{
     final String _label;
 
-    public PhiInstr(String label, Instr... inputs) {
+    public PhiInstr(BB cb, String label, Instr... inputs) {
         super(inputs);
         _label = label;
+
+        _bb = cb;
     }
     @Override public String label() {return "Phi" + _label;}
 
     @Override
     StringBuilder _print1(StringBuilder sb) {
         sb.append("Phi(");
+        assert _bb != null;
+        sb.append("bb").append(_bb._nid);
+        sb.append(",");
         for( Instr in : _inputs )
             in._print0(sb).append(",");
         sb.setLength(sb.length()-1);
@@ -24,7 +30,7 @@ public class PhiInstr extends Instr{
     @Override
     public Type compute() {
         Type t = Type.TOP;
-        for(int i = 1; i < nIns(); i++)
+        for(int i = 0; i < nIns(); i++)
             t = t.meet(in(i)._type);
         return t;
     }
@@ -46,9 +52,10 @@ public class PhiInstr extends Instr{
                 lhss[i] = in(i).in(0);
                 rhss[i] = in(i).in(1);
             }
-            Instr phi_lhs = new PhiInstr(_label,lhss).peephole();
-            Instr phi_rhs = new PhiInstr(_label,rhss).peephole();
-            return op.copy(phi_lhs,phi_rhs);
+
+            Instr phi_lhs = new PhiInstr(_bb, _label,lhss).peephole();
+            Instr phi_rhs = new PhiInstr(_bb, _label,rhss).peephole();
+            return op.copy(_bb, phi_lhs,phi_rhs);
         }
 
         return null;

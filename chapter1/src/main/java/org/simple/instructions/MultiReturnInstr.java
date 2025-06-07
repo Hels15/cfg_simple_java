@@ -1,10 +1,12 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 
 public class MultiReturnInstr extends Instr{
-    public MultiReturnInstr(Instr... data) {
+    public MultiReturnInstr(BB c, Instr... data) {
         super(data);
+        _bb = c;
     }
 
     @Override
@@ -16,7 +18,6 @@ public class MultiReturnInstr extends Instr{
     public Type compute() {
         return Type.BOTTOM;
     }
-
 
     @Override
     StringBuilder _print1(StringBuilder sb) {

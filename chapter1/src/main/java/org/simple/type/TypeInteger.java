@@ -21,11 +21,6 @@ public class TypeInteger extends Type {
     boolean isBot() {return !_is_con && _con == 1;}
 
     @Override
-    public String toString() {
-        return _print(new StringBuilder()).toString();
-    }
-
-    @Override
     public StringBuilder _print(StringBuilder sb) {
         if(isTop()) return sb.append("IntTop");
         if(isBot()) return sb.append("IntBot");
@@ -40,7 +35,7 @@ public class TypeInteger extends Type {
     public long value() { return _con; }
 
     @Override
-    public Type meet(Type other) {
+    public Type xmeet(Type other) {
         if(this == other) return this;
         if(!(other instanceof TypeInteger i)) return super.meet(other);
 

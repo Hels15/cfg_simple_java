@@ -1,10 +1,11 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
 public class DivInstr extends Instr{
-    public DivInstr(Instr lhs, Instr rhs) {super(lhs, rhs);}
+    public DivInstr(BB c, Instr lhs, Instr rhs) {super(lhs, rhs); _bb = c;}
     public String label() {
         return "Div";
     }
@@ -31,5 +32,5 @@ public class DivInstr extends Instr{
         if(in(1)._type.isConstant() && in(1)._type instanceof TypeInteger i && i.value() == 1) return in(0);
         return null;
     }
-    @Override Instr copy(Instr lhs, Instr rhs) {return new AddInstr(lhs, rhs);}
+    @Override Instr copy(BB c, Instr lhs, Instr rhs) {return new AddInstr(c, lhs, rhs);}
 }

@@ -1,11 +1,12 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
 public class MulInstr extends Instr {
     public String label() {return "Mul";}
-    public MulInstr(Instr lhs, Instr rhs) {super(lhs, rhs);}
+    public MulInstr(BB c, Instr lhs, Instr rhs) {super(lhs, rhs); _bb = c;}
 
     @Override public Type compute() {
         if (in(0)._type instanceof TypeInteger i0 &&
@@ -37,8 +38,8 @@ public class MulInstr extends Instr {
 
         return null;
     }
-    @Override Instr copy(Instr lhs, Instr rhs) {
-        return new MulInstr(lhs, rhs);
+    @Override Instr copy(BB c, Instr lhs, Instr rhs) {
+        return new MulInstr(c, lhs, rhs);
     }
 
 }

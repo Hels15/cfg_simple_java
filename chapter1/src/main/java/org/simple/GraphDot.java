@@ -35,7 +35,7 @@ public class GraphDot {
             sb.append(String.format("  subgraph cluster_%d {\n", clusterId));
             sb.append("    style=filled;\n");
             sb.append("    color=lightgrey;\n");
-            sb.append(String.format("    label = \"BB #%d\";\n", clusterId));
+            sb.append(String.format("    label = \"type: #%s\";\n", bb._type.toString()));
             sb.append(String.format("    %s [label=<\n", bbId));
             sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n");
 

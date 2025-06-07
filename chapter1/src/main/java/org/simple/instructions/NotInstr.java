@@ -1,10 +1,11 @@
 package org.simple.instructions;
 
+import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
 public class NotInstr extends Instr{
-    public NotInstr(Instr in) {super(null, in);}
+    public NotInstr(BB c, Instr in) {super(null, in); _bb = c; }
 
     @Override public String label() { return "Not"; }
 
