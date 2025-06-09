@@ -9,7 +9,6 @@ public class PhiInstr extends Instr{
     public PhiInstr(BB cb, String label, Instr... inputs) {
         super(inputs);
         _label = label;
-
         _bb = cb;
     }
     @Override public String label() {return "Phi" + _label;}
@@ -40,6 +39,12 @@ public class PhiInstr extends Instr{
         if(same_inputs()) return in(0);
 
         Instr op = in(0);
+
+        if(!_bb.dead()) {
+            // invariant corresponding pred - corresponding index in phi
+            if(_bb._preds.getFirst().dead()) return in(nIns()-1);
+            if(_bb._preds.getLast().dead()) return in(0);
+        }
 
         // Pull "down" a common data op.  One less op in the world.  One more
         // Phi, but Phis do not make code.

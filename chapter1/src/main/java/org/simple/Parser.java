@@ -59,7 +59,7 @@ public class Parser {
         // Run pass manager to clean up dead bbs
         if(!Instr._disablePasses) {
              _pass.bb_dead(_entry);
-            _pass.combine(_entry);
+             _pass.combine(_entry);
         }
         // collect now returns from new graph
 //        _pass.collect_returns(_entry, _returns);
@@ -121,8 +121,7 @@ public class Parser {
 
         // create merge point
         _cBB = new BB();
-        if_instr.true_bb().addSuccessor(_cBB);
-        if_instr.false_bb().addSuccessor(_cBB);
+        if_instr.addIfSuccessor(_cBB);
 
         // add Phi to current BB
         tScope.mergeScopes(fScope, _cBB);
@@ -160,7 +159,7 @@ public class Parser {
         // Todo: Better solution  - maybe need graph to collect return after all optimisations
         // Todo: see collect return for the current attempt
         if(!Instr._disablePeephole) {
-            if(_cBB._type != Type.XCONTROL) _returns.add(ret);
+            if(!_cBB.dead()) _returns.add(ret);
         } else {
             _returns.add(ret);
         }

@@ -5,34 +5,53 @@ import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 import org.simple.type.TypeTuple;
 
-public class IfInstr extends Instr{
+public class IfInstr extends Instr {
     BB _true_bb;
     BB _false_bb;
 
     public IfInstr(BB c, Instr pred) {
-        super(pred); _bb = c;
+        super(pred);
+        _bb = c;
     }
+
     @Override
     public String label() {
         return "If";
     }
+
     @Override
     StringBuilder _print1(StringBuilder sb) {
         sb.append("if (");
         return in(0)._print0(sb).append(" )");
     }
 
-    public Instr pred() {return in(0);}
+    public Instr pred() {
+        return in(0);
+    }
 
-    public BB true_bb() { return _true_bb; }
-    public BB false_bb() { return _false_bb; }
+    public BB true_bb() {
+        return _true_bb;
+    }
+
+    public BB false_bb() {
+        return _false_bb;
+    }
 
     @Override
     public Type compute() {
         if (pred()._type instanceof TypeInteger ti && ti.isConstant()) {
-            if (ti.value() == 0)   return TypeTuple.IF_FALSE;
-            else                   return TypeTuple.IF_TRUE;
+            if (ti.value() == 0) return TypeTuple.IF_FALSE;
+            else return TypeTuple.IF_TRUE;
         }
+
+        for(BB dom = _bb.idom(), prior=_bb; dom!=null;  prior=dom, dom = dom.idom() )
+            if(!dom._instrs.isEmpty() && dom.endInstr() instanceof IfInstr iff && iff.pred()==pred() ) {
+                int idx = dom.idx(prior);
+
+                 if(idx != -1) {
+                    return idx == 0 ?  TypeTuple.IF_TRUE : TypeTuple.IF_FALSE;
+                 } else return null;
+            }
 
         return TypeTuple.IF_BOTH;
     }
@@ -68,5 +87,31 @@ public class IfInstr extends Instr{
         falsebb._type = falseType;
         _false_bb = falsebb;
         c.addSuccessor(falsebb);
+    }
+
+    // This is a specific method to add a successor BB to the 2 branches of the if
+    // It looks at BB level optimisations
+    // It adds a successor to the 2 branches of the if
+    //         if()
+    //       /      \
+    //    true_bb   false_bb
+    //       \       /
+    //         merge
+    // Add merge BB as a successor to both true_bb and false_bb
+    public void addIfSuccessor(BB merge) {
+        true_bb().addSuccessor(merge);
+        false_bb().addSuccessor(merge);
+
+        for (int i = 0; i < merge._preds.size(); i++) {
+            BB pred_1 = merge._preds.get(i);
+            BB pred_2 = merge._preds.get(1 - i);
+            if (pred_1.dead() && !pred_2._instrs.isEmpty() && pred_2.endInstr() instanceof ReturnInstr) {
+                merge._type = Type.XCONTROL;
+            }
+        }
+        if (!merge._preds.getFirst().dead() && !merge._preds.getLast().dead()
+                && merge._preds.getFirst().endInstr() instanceof ReturnInstr && merge._preds.getLast().endInstr() instanceof ReturnInstr) {
+            merge._type = Type.XCONTROL;
+        }
     }
 }

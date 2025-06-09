@@ -36,6 +36,8 @@ public class MulInstr extends Instr {
 
         if(t1.isConstant() && !t2.isConstant()) return swap12();
 
+        Instr phicon = AddInstr.phiCon(_bb, this, true);
+        if(phicon != null) return phicon;
         return null;
     }
     @Override Instr copy(BB c, Instr lhs, Instr rhs) {

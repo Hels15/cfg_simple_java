@@ -505,7 +505,7 @@ public class Test1 {
                 assertEquals("return 2;", ret.toString());
         }
 
-        // Todo: implement it from here, rotation, dominators, if shortcut
+        // Todo: implement it from here, rotation, dominators
         @Test public void testPeepholeRotate() {
                 Parser parser = new Parser(
                         """
@@ -516,7 +516,7 @@ public class Test1 {
                                 """
                 );
                 ReturnInstr instr = (ReturnInstr) parser.parse(true, TypeInteger.BOT);
-                assertEquals("return ((arg<Phi(2,1))<3);", instr.toString());
+                assertEquals("return ((arg<Phi(bb6,2,1))<3);", instr.toString());
         }
 
         @Test
@@ -551,7 +551,7 @@ public class Test1 {
                         return b;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
-                assertEquals("return Phi(42,5);", instr.toString());
+                assertEquals("return Phi(bb9,42,5);", instr.toString());
         }
 
         @Test
@@ -571,9 +571,10 @@ public class Test1 {
                         return b;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
-                assertEquals("return Phi(2,5);", instr.toString());
+                assertEquals("return Phi(bb9,2,5);", instr.toString());
         }
 
+        // Todo: phi rotate
         @Test
         public void testMerge3With2() {
                 Parser parser = new Parser(
@@ -590,10 +591,11 @@ public class Test1 {
                             a=5;
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true, TypeInteger.constant(2));
                 assertEquals("return 5;", instr.toString());
         }
 
+        // Todo: phi rotate
         @Test
         public void testMerge3With1() {
                 Parser parser = new Parser(
@@ -610,7 +612,7 @@ public class Test1 {
                             a=5;
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true, TypeInteger.constant(1));
                 assertEquals("return 3;", instr.toString());
         }
 
@@ -631,7 +633,7 @@ public class Test1 {
                         return a;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
-                assertEquals("return Phi(3,Phi(4,5));", instr.toString());
+                assertEquals("return Phi(bb12,3,Phi(bb11,4,5));", instr.toString());
         }
 
         @Test
@@ -675,6 +677,8 @@ public class Test1 {
                 assertEquals("return 4;", instr.toString());
         }
 
+        // 0 2 and 1 2 = 41
+        // Todo: fix this(dominators are missing)
         @Test
         public void testDemo1NonConst() {
                 Parser parser = new Parser(
@@ -690,7 +694,7 @@ public class Test1 {
                         return a+b;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
-                assertEquals("return Phi(4,1);", instr.toString());
+                assertEquals("return Phi(bb9,4,1);", instr.toString());
         }
 
         @Test
@@ -744,9 +748,10 @@ public class Test1 {
                         return a+b+c;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return (Phi(Phi(2,3),0)+Phi(3,1))", instr.toString());
+                assertEquals("return (Phi(bb12,Phi(bb8,2,3),0)+Phi(bb12,3,1));", instr.toString());
         }
 
+        // Todo: phi rotate
         @Test
         public void testDemo2True() {
                 Parser parser = new Parser(
@@ -763,16 +768,16 @@ public class Test1 {
                         return a+b+c;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(1));
-                assertEquals("return (Phi(Phi(2,3),0)+Phi(3,1))", instr.toString());
+                assertEquals("return 6;", instr.toString());
         }
 
         @Test
         public void testDemo2arg2() {
-                Parser parser = new Parser(
-                        """
+                Parser parser = new Parser(                        """
                         int a = 0;
                         int b = 1;
                         int c = 0;
+
                         if( arg ) {
                         a = 1;
                         if( arg==2 ) { c=2; } else { c=3; }

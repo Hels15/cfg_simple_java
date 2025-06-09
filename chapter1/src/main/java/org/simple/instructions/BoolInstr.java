@@ -42,6 +42,9 @@ abstract public class BoolInstr extends Instr{
         if( in(0)==in(1) )
             return new ConstantInstr(TypeInteger.constant(doOp(3,3)?1:0), _bb);
 
+        Instr phicon = AddInstr.phiCon(_bb, this, false);
+        if(phicon != null) return phicon;
+
         return null;
     }
 

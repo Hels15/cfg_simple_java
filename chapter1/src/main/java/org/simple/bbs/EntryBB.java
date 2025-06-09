@@ -5,6 +5,9 @@ public class EntryBB extends BB {
         super();
     }
 
+    public @Override BB idom() {
+        return null;
+    }
     @Override
     public void addPredecessor(BB bb) {
         throw new UnsupportedOperationException("EntryBB cannot have predecessors");

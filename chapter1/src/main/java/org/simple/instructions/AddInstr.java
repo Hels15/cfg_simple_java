@@ -40,31 +40,13 @@ public class AddInstr extends Instr{
             return new AddInstr(_bb, new AddInstr(_bb, lhs,add.in(0)).peephole(), add.in(1));
 
         if( !(lhs instanceof AddInstr) )
-            return spline_cmp(lhs,rhs) ? swap12() : null;
+            return spline_cmp(lhs,rhs) ? swap12() : phiCon(_bb,this, true);
 
         if( lhs.in(1)._type.isConstant() && t2.isConstant() )
             return new AddInstr(_bb, lhs.in(0),new AddInstr(_bb, lhs.in(1),rhs).peephole());
 
-        if( lhs.in(1) instanceof PhiInstr phi && phi.allCons() &&
-                // Do we have ((x + (phi cons)) + con) ?
-                // Do we have ((x + (phi cons)) + (phi cons)) ?
-                // Push constant up through the phi: x + (phi con0+con0 con1+con1...)
-
-                // Note that this is the exact reverse of Phi pulling a common op
-                // down to reduce total op-count.  We don't get in an endless push-
-                // up push-down peephole cycle because the constants all fold first.
-                (t2.isConstant() || (rhs instanceof PhiInstr && phi._bb == rhs._bb && rhs.allCons()) ) ) {
-            Instr[] ns = new Instr[phi.nIns()];
-            // Push constant up through the phi: x + (phi con0+con0 con1+con1...)
-            for( int i=0; i<ns.length; i++ )
-                ns[i] = new AddInstr(_bb, phi.in(i),t2.isConstant() ? rhs : rhs.in(i)).peephole();
-            String label = phi._label + (rhs instanceof PhiInstr rphi ? rphi._label : "");
-            return new AddInstr(_bb, lhs.in(0),new PhiInstr(_bb, label,ns).peephole());
-        }
-
-        if( spline_cmp(lhs.in(1),rhs) )
-            return new AddInstr(_bb, new AddInstr(_bb, lhs.in(0),rhs).peephole(),lhs.in(1));
-
+        Instr phicon = phiCon(_bb, this, true);
+        if(phicon != null) return phicon;
         return null;
     }
 
@@ -81,6 +63,39 @@ public class AddInstr extends Instr{
         return lo._nid > hi._nid;
     }
 
+    static Instr phiCon(BB c, Instr op, boolean rotate) {
+        Instr lhs = op.in(0);
+        Instr rhs = op.in(1);
+
+        PhiInstr lphi = pcon(lhs);
+        if(rotate && lphi == null && lhs.nIns() > 1) {
+            if(lhs.getClass() != op.getClass()) return null;
+            lphi  = pcon(lhs.in(1));
+        }
+
+        if( lphi==null ) return null;
+
+        // RHS is a constant or a Phi of constants
+        if( !(rhs instanceof ConstantInstr con) && pcon(rhs)==null )
+            return null;
+
+        // If both are Phis, must be same Region
+        if( rhs instanceof PhiInstr && lphi._bb != rhs._bb )
+            return null;
+
+        Instr[] ns = new Instr[lphi.nIns()];
+        // Push constant up through the phi: x + (phi con0+con0 con1+con1...)
+        for( int i=0; i<ns.length; i++ )
+            ns[i] = op.copy(c, lphi.in(i), rhs instanceof PhiInstr ? rhs.in(i) : rhs).peephole();
+        String label = lphi._label + (rhs instanceof PhiInstr rphi ? rphi._label : "");
+        Instr phi = new PhiInstr(c, label,ns).peephole();
+        // Rotate needs another op, otherwise just the phi
+        return lhs==lphi ? phi : op.copy(c,lhs.in(0),phi);
+    }
+
+    static PhiInstr pcon(Instr op) {
+        return op instanceof PhiInstr phi && phi.allCons() ? phi: null;
+    }
     @Override
     StringBuilder _print1(StringBuilder sb) {
         in(0)._print0(sb.append("("));
