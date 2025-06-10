@@ -4,6 +4,8 @@ import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
+import java.util.BitSet;
+
 public class AddInstr extends Instr{
     public AddInstr(BB c, Instr lhs, Instr rhs) {super(lhs, rhs); _bb = c;}
     @Override public String label() {
@@ -97,9 +99,9 @@ public class AddInstr extends Instr{
         return op instanceof PhiInstr phi && phi.allCons() ? phi: null;
     }
     @Override
-    StringBuilder _print1(StringBuilder sb) {
-        in(0)._print0(sb.append("("));
-        in(1)._print0(sb.append("+"));
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
+        in(0)._print0(sb.append("("), visited);
+        in(1)._print0(sb.append("+"), visited);
         return sb.append(")");
     }
 

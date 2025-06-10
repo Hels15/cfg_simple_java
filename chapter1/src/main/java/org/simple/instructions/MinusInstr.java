@@ -4,6 +4,8 @@ import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
+import java.util.BitSet;
+
 public class MinusInstr extends Instr{
     public MinusInstr(BB c, Instr in) {super(in); _bb = c;}
     @Override public String label() {
@@ -18,8 +20,8 @@ public class MinusInstr extends Instr{
 
 
     @Override
-    StringBuilder _print1(StringBuilder sb) {
-        in(0)._print0(sb.append("(-"));
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
+        in(0)._print0(sb.append("(-"), visited);
         return sb.append(")");
     }
 

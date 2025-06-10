@@ -7,6 +7,7 @@ import org.simple.instructions.*;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
+import java.awt.color.ICC_ColorSpace;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +28,7 @@ public class Parser {
         add("int");
         add("return");
         add("true");
+        add("while");
     }};
 
     public ArrayList<ReturnInstr> _returns;
@@ -84,11 +86,49 @@ public class Parser {
         else if(matchx("int")) return parseDecl();
         else if(matchx("{")) return require(parseBlock(), "}");
         else if(matchx("if")) return parseIf();
+        else if(matchx("while")) return parseWhile();
         else if(matchx("#showGraph")) return require(showGraph(), ";");
         else if(matchx(";")) return null;
         else return parseExpressionStatement();
     }
 
+    private Instr parseWhile() {
+        require("(");
+
+        // header(predecessor is the loop)
+        BB header = new BB();
+        _cBB.addSuccessor(header);
+        _cBB = header;
+
+        ScopeInstr head = _scope.keep();
+        _scope.ctrl(_cBB);
+        _scope = _scope.dup(true);
+
+        var pred = require(parseExpression(), ")");
+
+        IfInstr if_instr = (IfInstr)new IfInstr(_cBB, pred).<IfInstr>keep().peephole();
+        _cBB.addInstr(if_instr);
+
+        if_instr.create_bbs(_cBB);
+        if_instr.unkeep();
+
+        _cBB = if_instr.false_bb();
+
+        var exit = _scope.dup();
+
+        _cBB = if_instr.true_bb();
+        parseStatement();
+        _cBB.addSuccessor(header);
+
+        head.endLoop(_scope);
+
+        head.unkeep().kill();
+
+        _cBB = if_instr.false_bb();
+        _scope = exit;
+
+        return if_instr;
+    }
     private Instr parseIf() {
         require("(");
         var pred = require(parseExpression(), ")");
@@ -96,6 +136,8 @@ public class Parser {
         IfInstr if_instr = (IfInstr)new IfInstr(_cBB, pred).<IfInstr>keep().peephole();
         _cBB.addInstr(if_instr);
         if_instr.create_bbs(_cBB);
+
+        if_instr.unkeep();
 
         int ndefs = _scope.nIns();
         ScopeInstr fScope = _scope.dup();

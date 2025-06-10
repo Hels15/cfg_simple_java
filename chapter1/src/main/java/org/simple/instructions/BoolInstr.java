@@ -5,6 +5,8 @@ import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
+import java.util.BitSet;
+
 abstract public class BoolInstr extends Instr{
     public BoolInstr(BB c, Instr lhs, Instr rhs) {
         super(lhs, rhs);
@@ -17,9 +19,9 @@ abstract public class BoolInstr extends Instr{
 
 
     @Override
-    StringBuilder _print1(StringBuilder sb) {
-        in(0)._print0(sb.append("("));
-        in(1)._print0(sb.append(op()));
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
+        in(0)._print0(sb.append("("), visited);
+        in(1)._print0(sb.append(op()),visited);
         return sb.append(")");
     }
 

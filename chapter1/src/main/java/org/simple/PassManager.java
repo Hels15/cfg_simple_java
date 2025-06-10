@@ -18,9 +18,12 @@ public class PassManager {
     void bb_dead(EntryBB entry) {
         Queue<BB> queue = new LinkedList<>();
         queue.add(entry);
+
+        Set<BB> visited = new HashSet<>();
+
         while (!queue.isEmpty()) {
             BB bb = queue.poll();
-
+            if(!visited.add(bb)) continue;
             // just with single predecessor - this ignores the if case
             if(bb._preds.size() == 1 && bb._preds.getFirst().dead()) {
                 bb._type = Type.XCONTROL;
@@ -49,8 +52,10 @@ public class PassManager {
     void combine(EntryBB entry) {
         Queue<BB> queue = new LinkedList<>();
         queue.add(entry);
+        Set<BB> visited = new HashSet<>();
         while (!queue.isEmpty()) {
             BB bb = queue.poll();
+            if(!visited.add(bb)) continue;
 
             if(bb._succs.size() == 1 && bb._succs.getFirst()._preds.size() == 1 && !(bb instanceof EntryBB || bb instanceof ExitBB) ) {
                 // combine bb(s)

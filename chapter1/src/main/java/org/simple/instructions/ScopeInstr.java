@@ -14,11 +14,14 @@ public class ScopeInstr extends Instr{
         _scopes = new Stack<>();
         _type = Type.BOTTOM;
     }
+    public void ctrl(BB ctrl) {
+        _bb = ctrl;
+    }
     @Override public String label() {return "Scope";}
 
 
     @Override
-    StringBuilder _print1(StringBuilder sb) {
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
         sb.append(label());
         for( HashMap<String,Integer> scope : _scopes ) {
             sb.append("[");
@@ -29,8 +32,9 @@ public class ScopeInstr extends Instr{
                 sb.append(name).append(":");
                 Instr n = in(scope.get(name));
                 if( n==null ) sb.append("null");
-                else n._print0(sb);
+                else n._print0(sb, visited);
             }
+            sb.setLength(sb.length()-1);
             sb.append("]");
         }
         return sb;
@@ -47,16 +51,39 @@ public class ScopeInstr extends Instr{
     }
 
     public ScopeInstr dup() {
+        return dup(false);
+    }
+    public ScopeInstr dup(boolean loop) {
+        assert _bb != null : "ScopeInstr must have a BB";
+
         ScopeInstr dup = new ScopeInstr();
         for(HashMap<String, Integer> sysms: _scopes) {
             dup._scopes.push(new HashMap<>(sysms));
         }
         for(int i = 0; i < nIns(); i++) {
-            dup.addDef(in(i));
+            if(!loop) dup.addDef(in(i));
+            else {
+                String[] names = reverseNames();
+
+                dup.addDef(new PhiInstr(_bb, names[i], in(i), null)).peephole();
+                setDef(i, dup.in(i));
+            }
         }
+        dup._bb = _bb;
         return dup;
     }
 
+    public void endLoop(ScopeInstr back) {
+        for(int i = 0; i < nIns(); i++) {
+            PhiInstr phi = (PhiInstr)in(i);
+            phi.setDef(1, back.in(i));
+            Instr in = phi.peephole();
+            if(in != phi) {
+                phi.subsume(in);
+            }
+        }
+        back.kill();
+    }
     public void mergeScopes(ScopeInstr that, BB cb) {
         String[] ns = reverseNames();
         for(int i = 0; i < nIns(); i++) {

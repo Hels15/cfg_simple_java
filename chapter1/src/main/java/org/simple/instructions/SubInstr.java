@@ -4,6 +4,8 @@ import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
+import java.util.BitSet;
+
 public class SubInstr extends Instr{
     public SubInstr(BB c, Instr lhs, Instr rhs) {super(lhs, rhs); _bb = c;}
     public @Override String label() {
@@ -22,9 +24,9 @@ public class SubInstr extends Instr{
         return Type.BOTTOM;
     }
     @Override
-    StringBuilder _print1(StringBuilder sb) {
-        in(0)._print0(sb.append("("));
-        in(1)._print0(sb.append("-"));
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
+        in(0)._print0(sb.append("("), visited);
+        in(1)._print0(sb.append("-"), visited);
         return sb.append(")");
     }
 

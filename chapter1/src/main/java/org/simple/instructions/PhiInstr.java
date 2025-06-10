@@ -3,6 +3,8 @@ package org.simple.instructions;
 import org.simple.bbs.BB;
 import org.simple.type.Type;
 
+import java.util.BitSet;
+
 public class PhiInstr extends Instr{
     final String _label;
 
@@ -11,23 +13,33 @@ public class PhiInstr extends Instr{
         _label = label;
         _bb = cb;
     }
-    @Override public String label() {return "Phi" + _label;}
+    @Override public String label() {return "Phi_" + _label;}
 
     @Override
-    StringBuilder _print1(StringBuilder sb) {
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
+        // Still in progress
+        if(in(1) == null) {
+            sb.append("Z");
+        }
         sb.append("Phi(");
         assert _bb != null;
         sb.append("bb").append(_bb._nid);
-        sb.append(",");
-        for( Instr in : _inputs )
-            in._print0(sb).append(",");
-        sb.setLength(sb.length()-1);
+        if(!_inputs.isEmpty()) sb.append(",");
+        for( Instr in : _inputs ) {
+            if (in == null) sb.append("___");
+            else {
+                in._print0(sb, visited);
+                if( in != _inputs.getLast()) sb.append(",");
+            }
+        }
         sb.append(")");
         return sb;
     }
 
     @Override
     public Type compute() {
+        // In progress
+        if(in(1) == null) return Type.BOTTOM;
         Type t = Type.TOP;
         for(int i = 0; i < nIns(); i++)
             t = t.meet(in(i)._type);

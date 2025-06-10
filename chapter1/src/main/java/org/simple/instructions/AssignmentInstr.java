@@ -2,6 +2,8 @@ package org.simple.instructions;
 
 import org.simple.type.Type;
 
+import java.util.BitSet;
+
 // Todo: visualise type
 // Just an instruction for visualisation purposes
 public class AssignmentInstr extends Instr{
@@ -19,7 +21,7 @@ public class AssignmentInstr extends Instr{
     }
 
     @Override
-    StringBuilder _print1(StringBuilder sb) {
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
         sb.append(_init ? "def " : "").append(_name).append(" = ").append(in(0).print());
         return sb;
     }

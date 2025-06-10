@@ -3,6 +3,8 @@ package org.simple.instructions;
 import org.simple.bbs.BB;
 import org.simple.type.Type;
 
+import java.util.BitSet;
+
 public class ConstantInstr extends Instr {
     Type _con;
     String _label;
@@ -22,7 +24,7 @@ public class ConstantInstr extends Instr {
         return _con;
     }
     @Override
-    StringBuilder _print1(StringBuilder sb) {
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
         return _label != null && !_con.isConstant()? sb.append(_label): _con._print(sb);
     }
 

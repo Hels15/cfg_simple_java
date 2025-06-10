@@ -4,14 +4,16 @@ import org.simple.bbs.BB;
 import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 
+import java.util.BitSet;
+
 public class NotInstr extends Instr{
     public NotInstr(BB c, Instr in) {super(null, in); _bb = c; }
 
     @Override public String label() { return "Not"; }
 
     @Override
-    StringBuilder _print1(StringBuilder sb) {
-        in(1)._print0(sb.append("(!"));
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
+        in(1)._print0(sb.append("(!"), visited);
         return sb.append(")");
     }
 

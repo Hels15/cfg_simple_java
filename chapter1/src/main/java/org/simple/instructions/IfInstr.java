@@ -5,6 +5,8 @@ import org.simple.type.Type;
 import org.simple.type.TypeInteger;
 import org.simple.type.TypeTuple;
 
+import java.util.BitSet;
+
 public class IfInstr extends Instr {
     BB _true_bb;
     BB _false_bb;
@@ -20,9 +22,9 @@ public class IfInstr extends Instr {
     }
 
     @Override
-    StringBuilder _print1(StringBuilder sb) {
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
         sb.append("if (");
-        return in(0)._print0(sb).append(" )");
+        return in(0)._print0(sb, visited).append(" )");
     }
 
     public Instr pred() {

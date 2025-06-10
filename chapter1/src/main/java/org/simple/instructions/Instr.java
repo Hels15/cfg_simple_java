@@ -45,17 +45,20 @@ public abstract class Instr {
         return print();
     }
     public final String print() {
-        return _print0(new StringBuilder()).toString();
+        return _print0(new StringBuilder(), new BitSet()).toString();
 
     }
 
     Instr copy(BB c, Instr lhs, Instr rhs) { throw Utils.TODO("Binary ops need to implement copy"); }
 
     public String uniqueName() {return label() + _nid;}
-    final StringBuilder _print0(StringBuilder sb) {
+    final StringBuilder _print0(StringBuilder sb, BitSet visited) {
+        if(visited.get(_nid)) return sb.append(label());
+        visited.set(_nid);
+
         return isDead()
                 ? sb.append(uniqueName()).append(":DEAD")
-                : _print1(sb);
+                : _print1(sb, visited);
     }
 
     public Instr addDef(Instr new_def) {
@@ -63,7 +66,7 @@ public abstract class Instr {
         if(new_def != null) new_def.addUse(this);
         return new_def;
     }
-    abstract StringBuilder _print1(StringBuilder sb);
+    abstract StringBuilder _print1(StringBuilder sb, BitSet visited);
 
     public <I extends Instr> I keep() {return addUse(null);}
     public <I extends Instr> I unkeep() {delUse(null); return (I)this;}
@@ -132,6 +135,15 @@ public abstract class Instr {
         Utils.del(_inputs, idx);
     }
 
+    void subsume(Instr nnn) {
+        while(nOuts() > 0) {
+            Instr n = _outputs.removeLast();
+            int idx = Utils.find(n._inputs, this);
+            n._inputs.set(idx, nnn);
+            nnn.addUse(n);
+        }
+        kill();
+    }
     Instr swap12() {
         Instr tmp = in(0);
         _inputs.set(0, in(1));

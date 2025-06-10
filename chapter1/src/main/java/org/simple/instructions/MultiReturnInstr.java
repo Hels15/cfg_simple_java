@@ -3,6 +3,8 @@ package org.simple.instructions;
 import org.simple.bbs.BB;
 import org.simple.type.Type;
 
+import java.util.BitSet;
+
 public class MultiReturnInstr extends Instr{
     public MultiReturnInstr(BB c, Instr... data) {
         super(data);
@@ -20,10 +22,10 @@ public class MultiReturnInstr extends Instr{
     }
 
     @Override
-    StringBuilder _print1(StringBuilder sb) {
+    StringBuilder _print1(StringBuilder sb, BitSet visited) {
         sb.append("[");
         for (int i = 0; i < nIns(); i++) {
-            in(i)._print0(sb);
+            in(i)._print0(sb, visited);
             if (i < nIns() - 1)  sb.append(" ");
         }
         sb.append("]");
