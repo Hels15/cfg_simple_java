@@ -140,6 +140,7 @@ public class Parser {
         if_instr.unkeep();
 
         int ndefs = _scope.nIns();
+        _scope.ctrl(_cBB);
         ScopeInstr fScope = _scope.dup();
 
         _cBB = if_instr.true_bb(); // set current BB to true branch
@@ -240,28 +241,22 @@ public class Parser {
         var lhs = parseAddition();
 
         if (match("==")) {
-            var instr = new BoolInstr.EQ(_cBB, lhs, parseComparison()).peephole();
-            return instr;
+            return new BoolInstr.EQ(_cBB, lhs, parseComparison()).peephole();
         }
         if (match("!=")) {
-            var instr = new NotInstr(_cBB, new BoolInstr.EQ(_cBB, lhs, parseComparison()).peephole()).peephole();
-            return instr;
+            return new NotInstr(_cBB, new BoolInstr.EQ(_cBB, lhs, parseComparison()).peephole()).peephole();
         }
         if (match("<=")) {
-            var instr = new BoolInstr.LE(_cBB, lhs, parseComparison()).peephole();
-            return instr;
+            return new BoolInstr.LE(_cBB, lhs, parseComparison()).peephole();
         }
         if (match("<")) {
-            var instr = new BoolInstr.LT(_cBB, lhs, parseComparison()).peephole();
-            return instr;
+            return new BoolInstr.LT(_cBB, lhs, parseComparison()).peephole();
         }
         if (match(">=")) {
-            var instr = new BoolInstr.LE(_cBB, parseComparison(), lhs).peephole();
-            return instr;
+            return new BoolInstr.LE(_cBB, parseComparison(), lhs).peephole();
         }
         if (match(">")) {
-            var instr = new BoolInstr.LT(_cBB, parseComparison(), lhs).peephole();
-            return instr;
+            return new BoolInstr.LT(_cBB, parseComparison(), lhs).peephole();
         }
 
         return lhs;

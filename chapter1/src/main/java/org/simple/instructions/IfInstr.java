@@ -112,6 +112,7 @@ public class IfInstr extends Instr {
             }
         }
         if (!merge._preds.getFirst().dead() && !merge._preds.getLast().dead()
+                && !merge._preds.getFirst()._instrs.isEmpty() && !merge._preds.getLast()._instrs.isEmpty()
                 && merge._preds.getFirst().endInstr() instanceof ReturnInstr && merge._preds.getLast().endInstr() instanceof ReturnInstr) {
             merge._type = Type.XCONTROL;
         }

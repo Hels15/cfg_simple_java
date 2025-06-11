@@ -5,6 +5,7 @@ import org.simple.bbs.EntryBB;
 import org.simple.bbs.ExitBB;
 import org.simple.instructions.IfInstr;
 import org.simple.instructions.Instr;
+import org.simple.instructions.PhiInstr;
 import org.simple.instructions.ReturnInstr;
 import org.simple.type.Type;
 import org.simple.type.TypeTuple;
@@ -23,6 +24,7 @@ public class PassManager {
 
         while (!queue.isEmpty()) {
             BB bb = queue.poll();
+
             if(!visited.add(bb)) continue;
             // just with single predecessor - this ignores the if case
             if(bb._preds.size() == 1 && bb._preds.getFirst().dead()) {
@@ -36,6 +38,17 @@ public class PassManager {
                 bb._succs.forEach(succ -> succ._preds.remove(bb));
                 bb._instrs.clear();
                 continue;
+            }
+
+            // If one of the predecessors of the phi is dead, then just return the live input.
+            for (int i = 0; i < bb._instrs.size(); i++) {
+                Instr instr = bb._instrs.get(i);
+                if (instr instanceof PhiInstr phi) {
+                    Instr value = null;
+                    if (phi._bb._preds.getFirst().dead()) value = phi.in(phi.nIns() - 1);
+                    if (phi._bb._preds.getLast().dead())  value = phi.in(0);
+                    if (value != null) bb._instrs.set(i, value);
+                }
             }
 
             bb._instrs.removeIf(instr ->
@@ -55,9 +68,11 @@ public class PassManager {
         Set<BB> visited = new HashSet<>();
         while (!queue.isEmpty()) {
             BB bb = queue.poll();
+
             if(!visited.add(bb)) continue;
 
-            if(bb._succs.size() == 1 && bb._succs.getFirst()._preds.size() == 1 && !(bb instanceof EntryBB || bb instanceof ExitBB) ) {
+            // can't combine entry block with the next successor and also can't combine exit block with the predecessor
+            if(bb._succs.size() == 1 && bb._succs.getFirst()._preds.size() == 1 && !(bb instanceof EntryBB || bb._succs.getFirst() instanceof ExitBB) ) {
                 // combine bb(s)
                 BB succ = bb._succs.getFirst();
                 for(Instr instr: succ._instrs) {

@@ -162,6 +162,7 @@ public abstract class Instr {
         return true;
     }
 
+    public boolean pure() {return true;}
     public final Instr peephole() {
         Type type = _type = compute();
 

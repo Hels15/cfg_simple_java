@@ -18,14 +18,15 @@ public class ConstantInstr extends Instr {
     }
     @Override
     public String label() {
-        return _label != null ? _label : "Constant";
+        return ""+_con;
     }
     @Override public Type compute() {
         return _con;
     }
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
-        return _label != null && !_con.isConstant()? sb.append(_label): _con._print(sb);
+        //return _label != null && !_con.isConstant()? sb.append(_label): _con._print(sb);
+        return _con._print(sb);
     }
 
     @Override public Instr idealize() {return null;}

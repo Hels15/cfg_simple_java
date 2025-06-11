@@ -801,7 +801,7 @@ public class Test1 {
                         return arg;
                         """);
                 Instr._disablePeephole = true;
-                MultiReturnInstr instr = (MultiReturnInstr)parser.parse(false);
+                MultiReturnInstr instr = (MultiReturnInstr)parser.parse(true);
                 assertEquals("[return Phi(bb4,arg,(Phi_arg+1));]", instr.toString());
         }
 
@@ -816,8 +816,8 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
-                assertEquals("return Phi(Region23,1,Phi(Loop11,1,(Phi_a+1)));", instr.toString());
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
+                assertEquals("return Phi(bb9,1,Phi(bb6,1,(Phi_a+1)));", instr.toString());
         }
 
         @Test
@@ -835,8 +835,8 @@ public class Test1 {
                         }
                         return sum;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
-                assertEquals("return Phi(Loop8,0,Phi(Loop21,Phi_sum,(Phi(Loop,0,(Phi_j+1))+Phi_sum)));", instr.toString());
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
+                assertEquals("return Phi(bb4,0,Phi(bb7,Phi_sum,(Phi(bb7,0,(Phi_j+1))+Phi_sum)));", instr.toString());
         }
 
         @Test
@@ -854,7 +854,7 @@ public class Test1 {
                         }
                         return sum;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop8,2,Phi(Region27,Phi_b,4));", instr.toString());
         }
 
@@ -872,7 +872,7 @@ public class Test1 {
                         }
                         return b;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop8,2,(Phi(Region27,Phi_b,4)+1));", instr.toString());
         }
 
@@ -887,7 +887,7 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop7,1,((Phi_a+1)+2));", instr.toString());
         }
 
@@ -901,7 +901,7 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop7,1,(Phi_a+3));", instr.toString());
         }
 
@@ -913,7 +913,7 @@ public class Test1 {
                         while(arg) a = 2;
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop7,1,2);", instr.toString());
         }
 
@@ -924,7 +924,7 @@ public class Test1 {
                         while(arg) a = 2;
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop7,1,2);", instr.toString());
         }
 
@@ -939,7 +939,7 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop7,1,((Phi_a+1)+2));", instr.toString());
         }
 
@@ -954,7 +954,7 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop7,1,(Phi_a+3));", instr.toString());
         }
 
@@ -970,7 +970,7 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop8,1,((Phi_a+1)+2));", instr.toString());
         }
 
@@ -986,7 +986,7 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false, TypeInteger.constant(2));
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
                 assertEquals("return Phi(Loop8,1,(Phi_a+3));", instr.toString());
         }
 

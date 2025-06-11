@@ -98,6 +98,7 @@ public class BB {
     }
     // ending instruction
     public Instr endInstr() {
+        assert !_instrs.isEmpty() : "Basic block has no instructions";
         return _instrs.getLast();
     }
 
