@@ -842,20 +842,18 @@ public class Test1 {
         @Test
         public void testWhileScope() {
                 Parser parser = new Parser(                        """
-                        int sum = 0;
-                        int i = 0;
-                        while(i < arg) {
-                            i = i + 1;
-                            int j = 0;
-                            while( j < arg ) {
-                                sum = sum + j;
-                                j = j + 1;
-                            }
-                        }
-                        return sum;
+                int a = 1;
+                int b = 2;
+                while(a < 10) {
+                        if (a == 2) a = 3;
+                        else b = 4;
+                }
+                return b;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop8,2,Phi(Region27,Phi_b,4));", instr.toString());
+                Instr._disablePeephole = true;
+                MultiReturnInstr instr = (MultiReturnInstr) parser.parse(false);
+                assertEquals("[return Phi(bb4,2,Phi(bb9,Phi_b,4));]", instr.toString());
+                Instr._disablePeephole = false;
         }
 
 
@@ -873,7 +871,7 @@ public class Test1 {
                         return b;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop8,2,(Phi(Region27,Phi_b,4)+1));", instr.toString());
+                assertEquals("return Phi(bb4,2,(Phi(bb9,Phi_b,4)+1));", instr.toString());
         }
 
 
@@ -887,8 +885,10 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop7,1,((Phi_a+1)+2));", instr.toString());
+                Instr._disablePeephole = true;
+                MultiReturnInstr instr = (MultiReturnInstr)parser.parse(false);
+                assertEquals("[return Phi(bb4,1,((Phi_a+1)+2));]", instr.toString());
+                Instr._disablePeephole = false;
         }
 
         @Test
@@ -902,7 +902,7 @@ public class Test1 {
                         return a;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop7,1,(Phi_a+3));", instr.toString());
+                assertEquals("return Phi(bb4,1,(Phi_a+3));", instr.toString());
         }
 
 
@@ -913,8 +913,10 @@ public class Test1 {
                         while(arg) a = 2;
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop7,1,2);", instr.toString());
+                Instr._disablePeephole = true;
+                MultiReturnInstr instr = (MultiReturnInstr)parser.parse(false);
+                assertEquals("[return Phi(bb4,1,2);]", instr.toString());
+                Instr._disablePeephole = false;
         }
 
         @Test
@@ -925,7 +927,7 @@ public class Test1 {
                         return a;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop7,1,2);", instr.toString());
+                assertEquals("return Phi(bb4,1,2);", instr.toString());
         }
 
 
@@ -939,8 +941,10 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop7,1,((Phi_a+1)+2));", instr.toString());
+                Instr._disablePeephole = true;
+                MultiReturnInstr instr = (MultiReturnInstr)parser.parse(false);
+                assertEquals("[return Phi(bb4,1,((Phi_a+1)+2));]", instr.toString());
+                Instr._disablePeephole = false;
         }
 
 
@@ -955,7 +959,7 @@ public class Test1 {
                         return a;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop7,1,(Phi_a+3));", instr.toString());
+                assertEquals("return Phi(bb4,1,(Phi_a+3));", instr.toString());
         }
 
 
@@ -970,8 +974,10 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop8,1,((Phi_a+1)+2));", instr.toString());
+                Instr._disablePeephole = true;
+                MultiReturnInstr instr = (MultiReturnInstr)parser.parse(false);
+                assertEquals("[return Phi(bb4,1,((Phi_a+1)+2));]", instr.toString());
+                Instr._disablePeephole = false;
         }
 
 
@@ -987,7 +993,7 @@ public class Test1 {
                         return a;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop8,1,(Phi_a+3));", instr.toString());
+                assertEquals("return Phi(bb4,1,(Phi_a+3));", instr.toString());
         }
 
 
