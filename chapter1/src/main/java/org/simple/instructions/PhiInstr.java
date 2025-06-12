@@ -64,6 +64,12 @@ public class PhiInstr extends Instr{
 
         Instr op = in(0);
 
+        // Single unique input when a bb is dead is handled in the passManager
+        // When an input is same as the phi itself we handle it here
+
+        Instr live = singleUniqueInput();
+        if(live != null) return live;
+
 //       Handled in pass-manager(DCE)
 //        if(!_bb.dead()) {
 //            // invariant corresponding pred - corresponding index in phi
@@ -95,6 +101,16 @@ public class PhiInstr extends Instr{
         return null;
     }
 
+    private Instr singleUniqueInput() {
+        Instr live = null;
+        for(int i = 0; i < nIns(); i++) {
+        if(in(i) != this) {
+            if(live == null || live == in(i)) live = in(i);
+            else return null;
+        }
+        }
+        return live;
+    }
     public @Override boolean pure() {
         return false;
     }

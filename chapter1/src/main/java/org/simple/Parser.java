@@ -120,6 +120,7 @@ public class Parser {
         parseStatement();
         _cBB.addSuccessor(header);
 
+        // kills redundant phi(s)
         head.endLoop(_scope);
 
         head.unkeep().kill();

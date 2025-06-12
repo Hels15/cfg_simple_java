@@ -22,22 +22,14 @@ public class ScopeInstr extends Instr{
 
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
-        sb.append(label());
-        for( HashMap<String,Integer> scope : _scopes ) {
-            sb.append("[");
-            boolean first=true;
-            for( String name : scope.keySet() ) {
-                if( !first ) sb.append(", ");
-                first=false;
-                sb.append(name).append(":");
-                Instr n = in(scope.get(name));
-                if( n==null ) sb.append("null");
-                else n._print0(sb, visited);
-            }
-            sb.setLength(sb.length()-1);
-            sb.append("]");
+        sb.append("Scope[ ");
+        String[] names = reverseNames();
+        for(int j = 0; j < nIns(); j++) {
+            sb.append(names[j]).append(":");
+            Instr instr = in(j);
+            instr._print0(sb, visited).append(" ");
         }
-        return sb;
+        return sb.append("]");
     }
 
     public String[] reverseNames() {

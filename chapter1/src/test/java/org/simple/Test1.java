@@ -996,6 +996,54 @@ public class Test1 {
                 assertEquals("return Phi(bb4,1,(Phi_a+3));", instr.toString());
         }
 
+        // Add it after binary
+        // Multiple inputs to a region here?
+        @Test public void testLogicalOr() {
+                Parser parser = new Parser(
+                        """
+                                int a = 2;
+                                int b = 3;
+                                int arg = 1;
+                                if(a || b) {
+                                        arg = arg + 1;
+                                }
+                                return arg;
+                                """
+                );
+                ReturnInstr instr = (ReturnInstr)parser.parse();
+                assertEquals("return (arg||arg);", instr.toString());
+        }
+
+        @Test public void testLogicalAnd() {
+                Parser parser = new Parser(
+                        """
+                                int a = 2;
+                                int b = 3;
+                                int arg = 1;
+                                if(a && b) {
+                                        arg = arg + 1;
+                                }
+                                return arg;
+                                """
+                );
+                ReturnInstr instr = (ReturnInstr)parser.parse();
+                assertEquals("return (arg||arg);", instr.toString());
+        }
+
+        @Test public void testEagerPhiKill() {
+                Parser parser = new Parser("""
+                       int a = 1;
+                       int b = 1; 
+                       while(a < 10) {
+                            a = a + 1;
+                            a = a + 2;
+                        }
+                        return a;
+                        """);
+                ReturnInstr instr = (ReturnInstr)parser.parse(false);
+                assertEquals("return Phi(bb4,1,(Phi_a+3));", instr.toString());
+        }
+
 
 }
 
