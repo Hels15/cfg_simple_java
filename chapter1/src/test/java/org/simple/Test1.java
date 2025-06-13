@@ -1056,7 +1056,7 @@ public class Test1 {
                         }
                         return arg;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
                 assertEquals("return Phi(Region36,Phi(Region25,Phi(Loop6,arg,(Phi_arg+1)),Add),Add);", instr.toString());
         }
 

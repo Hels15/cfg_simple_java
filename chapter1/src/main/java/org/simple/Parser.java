@@ -94,9 +94,18 @@ public class Parser {
         else if(matchx("{")) return require(parseBlock(), "}");
         else if(matchx("if")) return parseIf();
         else if(matchx("while")) return parseWhile();
+        else if(matchx("break")) return parseBreak();
+        else if(matchx("continue")) return parseContinue();
         else if(matchx("#showGraph")) return require(showGraph(), ";");
         else if(matchx(";")) return null;
         else return parseExpressionStatement();
+    }
+
+    private Instr parseBreak() {
+        return new BreakInstr(_cBB).peephole();
+    }
+    private Instr parseContinue() {
+        return new ContinueInstr(_cBB).peephole();
     }
 
     private Instr parseWhile() {
