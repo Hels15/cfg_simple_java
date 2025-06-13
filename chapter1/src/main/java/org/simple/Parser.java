@@ -29,9 +29,15 @@ public class Parser {
         add("return");
         add("true");
         add("while");
+        add("break");
+        add("continue");
     }};
 
     public ArrayList<ReturnInstr> _returns;
+
+    ScopeInstr _continueScope;
+    ScopeInstr _breakScope;
+
     public Parser(String source) {
         _lexer = new Lexer(source);
         _scope = new ScopeInstr();
@@ -39,6 +45,7 @@ public class Parser {
         _cBB   = new BB(); // current basic block is the entry block
         _exit  = new ExitBB();
         _returns  = new ArrayList<>();
+        _continueScope = _breakScope = null;
         _pass = new PassManager();
     }
     public Instr parse() {return parse(false);}
