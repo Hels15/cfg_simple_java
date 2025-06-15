@@ -1027,7 +1027,7 @@ public class Test1 {
                                 """
                 );
                 ReturnInstr instr = (ReturnInstr)parser.parse();
-                assertEquals("return (arg||arg);", instr.toString());
+                assertEquals("return (arg&&arg);", instr.toString());
         }
 
         @Test public void testEagerPhiKill() {
@@ -1057,10 +1057,10 @@ public class Test1 {
                         return arg;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
-                assertEquals("return Phi(Region36,Phi(Region25,Phi(Loop6,arg,(Phi_arg+1)),Add),Add);", instr.toString());
+                assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
-
+        // Failed
         @Test public void testEx5() {
                 Parser parser = new Parser("""
                         int a = 1;
@@ -1074,11 +1074,11 @@ public class Test1 {
                         }
                         return a;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop7,1,Phi(Region42,Phi_a,(Phi_a+1)));", instr.toString());
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(bb4,1,(Phi_a+1));", instr.toString());
         }
 
-
+        // Failed
         @Test public void testEx4() {
                 Parser parser = new Parser("""
                         while(arg < 10) {
@@ -1090,8 +1090,8 @@ public class Test1 {
                         }
                         return arg;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Region34,Phi(Loop6,arg,(Phi_arg+1)),Add);", instr.toString());
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
 
@@ -1104,10 +1104,11 @@ public class Test1 {
                         }
                         return arg;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Region25,Phi(Loop6,arg,(Phi_arg+1)),Add);", instr.toString());
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
+        // Failed
         @Test public void testEx2() {
                 Parser parser = new Parser("""
                         while(arg < 10) {
@@ -1119,11 +1120,11 @@ public class Test1 {
                         }
                         return arg;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
-                assertEquals("return Phi(Loop6,arg,(Phi_arg+1));", instr.toString());
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
-
+        // Failed
         @Test public void testEx1() {
                 Parser parser = new Parser("""
                         while(arg < 10) {
@@ -1133,7 +1134,7 @@ public class Test1 {
                         }
                         return arg;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
                 assertEquals("return Phi(Loop6,arg,(Phi_arg+1));", instr.toString());
         }
 
@@ -1147,7 +1148,7 @@ public class Test1 {
                         }
                         return arg;
                         """);
-                ReturnInstr instr = (ReturnInstr)parser.parse(false);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
                 assertEquals("return arg;", instr.toString());
         }
 

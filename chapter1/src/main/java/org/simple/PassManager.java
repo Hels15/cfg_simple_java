@@ -14,9 +14,79 @@ import java.util.*;
 
 // maybe a work-list that works until a fixed point
 public class PassManager {
-    // kill dead basic blocks
-    // Need to return last BB in the processed graph
-    void bb_dead(EntryBB entry) {
+    public int combine_pass = 0;
+    public int dce_pass     = 0;
+    boolean bb_dead(BB bb) {
+        boolean changed = false;
+        int count_bb_instr = bb._instrs.size();
+
+        // if a basic block ends with a break it can only have one successor(the shared exit)
+        // this opt gets rid of the other successor
+        if(bb._kind == BB.BBKind.BREAK && bb._succs.size() == 2) {
+            for(int i = 0; i < bb._succs.size(); i++) {
+                BB succ = bb._succs.get(i);
+                if(succ._kind == BB.BBKind.LOOP_EXIT) {
+                    BB to_remove = bb._succs.get(1 - i);
+                    bb._succs.remove(1 -i);
+                    to_remove._preds.remove(bb);
+                    changed = true;
+                }
+            }
+        }
+
+        // if a basic block ends with a continue it can only have one successor(the loop header)
+        // this opt gets rid of the other successor
+        if(bb._kind == BB.BBKind.CONTINUE && bb._succs.size() == 2) {
+            for(int i = 0; i < bb._succs.size(); i++) {
+                BB succ = bb._succs.get(i);
+                if(succ._kind == BB.BBKind.LOOP_HEADER) {
+                    bb._succs.remove(i);
+                    succ._preds.remove(bb);
+                    changed = true;
+                }
+            }
+        }
+
+        // if the predecessor of the current block is dead, mark current block as dead
+        if(bb._preds.size() == 1 && bb._preds.getFirst().dead()) {
+            bb._type = Type.XCONTROL;
+            changed = true;
+        }
+
+        // if the current block is dead and it is not an exit block
+        // then we can remove it from the graph
+        if(bb.dead() && !(bb instanceof ExitBB)) {
+            // remove dead BB
+            bb._preds.forEach(pred -> pred._succs.remove(bb));
+            bb._succs.forEach(succ -> succ._preds.remove(bb));
+            bb._instrs.clear();
+            changed = true;
+        }
+
+        // If one of the predecessors of the phi is dead, then just return the live input.
+        for (int i = 0; i < bb._instrs.size(); i++) {
+            Instr instr = bb._instrs.get(i);
+            if (instr instanceof PhiInstr phi) {
+                Instr value = null;
+                if (phi._bb._preds.getFirst().dead()) value = phi.in(phi.nIns() - 1);
+                if (phi._bb._preds.getLast().dead())  value = phi.in(0);
+                if (value != null) {bb._instrs.set(i, value); changed = true;}
+            }
+        }
+
+        // remove if instructions from the bb when we know that one block is surely dead.
+        // when we come across IF_TRUE or IF_FALSE we will mark the other bb as dead so the instruction
+        // can be safely removed
+        // see if instruction create_bbs function;
+        bb._instrs.removeIf(instr ->
+                instr instanceof IfInstr ifInstr &&
+                        (ifInstr._type == TypeTuple.IF_TRUE || ifInstr._type == TypeTuple.IF_FALSE)
+        );
+
+        if(count_bb_instr != bb._instrs.size()) changed = true;
+        return changed;
+    }
+    void bb_dead_main(EntryBB entry) {
         Queue<BB> queue = new LinkedList<>();
         queue.add(entry);
 
@@ -26,54 +96,22 @@ public class PassManager {
             BB bb = queue.poll();
 
             if(!visited.add(bb)) continue;
-            // just with single predecessor - this ignores the if case
-            if(bb._preds.size() == 1 && bb._preds.getFirst().dead()) {
-                bb._type = Type.XCONTROL;
+
+            while(bb_dead(bb)) {
+                dce_pass++;
             }
-
-
-            if(bb.dead() && !(bb instanceof ExitBB)) {
-                // remove dead BB
-                bb._preds.forEach(pred -> pred._succs.remove(bb));
-                bb._succs.forEach(succ -> succ._preds.remove(bb));
-                bb._instrs.clear();
-                continue;
-            }
-
-            // If one of the predecessors of the phi is dead, then just return the live input.
-            for (int i = 0; i < bb._instrs.size(); i++) {
-                Instr instr = bb._instrs.get(i);
-                if (instr instanceof PhiInstr phi) {
-                    Instr value = null;
-                    if (phi._bb._preds.getFirst().dead()) value = phi.in(phi.nIns() - 1);
-                    if (phi._bb._preds.getLast().dead())  value = phi.in(0);
-                    if (value != null) bb._instrs.set(i, value);
-                }
-            }
-
-            bb._instrs.removeIf(instr ->
-                    instr instanceof IfInstr ifInstr &&
-                            (ifInstr._type == TypeTuple.IF_TRUE || ifInstr._type == TypeTuple.IF_FALSE)
-            );
 
             queue.addAll(bb._succs);
         }
 
     }
-    // Call it first then use worklist
-    // combine basic blocks(single successor/single pred)
-    void combine(EntryBB entry) {
-        Queue<BB> queue = new LinkedList<>();
-        queue.add(entry);
-        Set<BB> visited = new HashSet<>();
-        while (!queue.isEmpty()) {
-            BB bb = queue.poll();
 
-            if(!visited.add(bb)) continue;
-
-            // can't combine entry block with the next successor and also can't combine exit block with the predecessor
+    boolean combine(BB bb) {
+           boolean changed = false;
+           // if the next block has only one predecessor and it is the current block
+           // then we can combine the two blocks and kill the successor, we also add the successors of the killed
+           // block to the current block so that the graph still remains sound
             if(bb._succs.size() == 1 && bb._succs.getFirst()._preds.size() == 1 && !(bb instanceof EntryBB || bb._succs.getFirst() instanceof ExitBB) ) {
-                // combine bb(s)
                 BB succ = bb._succs.getFirst();
                 for(Instr instr: succ._instrs) {
                     bb.addInstr(instr);
@@ -82,27 +120,26 @@ public class PassManager {
 
                 bb._succs.clear();
                 bb._succs.addAll(succ._succs);
-                // tag as dead
+                changed = true;
             }
+        return changed;
+    }
+
+    void bb_combine_main(EntryBB main) {
+        Queue<BB> queue = new LinkedList<>();
+        queue.add(main);
+        Set<BB> visited = new HashSet<>();
+
+        while (!queue.isEmpty()) {
+            BB bb = queue.poll();
+
+            if(!visited.add(bb)) continue;
+
+            while(combine(bb)) {
+                combine_pass++;
+            };
+
             queue.addAll(bb._succs);
         }
     }
-
-//    void collect_returns(EntryBB entry, ArrayList<ReturnInstr> returns) {
-//        Queue<BB> queue = new LinkedList<>();
-//        queue.add(entry);
-//
-//        Set<ReturnInstr> visited = new HashSet<>();
-//        while (!queue.isEmpty()) {
-//            BB bb = queue.poll();
-//            for (Instr instr : bb._instrs) {
-//                if (instr instanceof ReturnInstr ret) {
-//                    if (!visited.add(ret)) returns.add(ret);
-//
-//                }
-//            }
-//            queue.addAll(bb._succs);
-//        }
-//
-//    }
 }

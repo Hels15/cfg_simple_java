@@ -13,10 +13,31 @@ public class BB {
 
     public final ArrayList<BB> _succs;
 
+    public String _label;
+
+    public enum BBKind {
+        NONE,
+        ENTRY,
+        EXIT,
+        LOOP_HEADER,
+        BACK_EDGE,
+        CONDITIONAL_BLOCK,
+        LOOP_BODY,
+        LOOP_EXIT,
+        BREAK,
+        CONTINUE,
+        RETURN,
+        MERGE,
+        DEAD,
+        GENERIC
+    }
+
+    public BBKind _kind = BBKind.NONE;
     // typed BB
     public Type _type;
 
     int _idepth;
+
 
     public final int _nid;
     private static int UNIQUE_BB_ID = 1;
@@ -29,12 +50,30 @@ public class BB {
         return _type == Type.XCONTROL;
     }
 
-    public BB() {
+    public BB(String label) {
         _instrs = new ArrayList<>();
         _succs = new ArrayList<>();
         _preds = new ArrayList<>();
+        _label = label; // no label by default
         _type = Type.CONTROL; // default type
         _nid = UNIQUE_BB_ID++;
+    }
+    public BB()
+    {
+       this("");
+    }
+    public void clear_succs() {
+        for (BB succ : _succs) {
+            succ._preds.remove(this);
+        }
+        _succs.clear();
+    }
+
+    public void clear_preds() {
+        for (BB pred : _preds) {
+            pred._succs.remove(this);
+        }
+        _preds.clear();
     }
 
     public void addSuccessor(BB bb) {
@@ -60,6 +99,8 @@ public class BB {
     public BB idom() {
         BB new_idom = null;
         for (BB pred : _preds) {
+            if(_kind == BBKind.LOOP_HEADER && (pred._kind == BBKind.BACK_EDGE ||
+                pred._kind == BBKind.CONTINUE) && pred._nid > _nid) continue;
             if (new_idom == null)
                 new_idom = pred;
             else

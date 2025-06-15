@@ -25,8 +25,8 @@ public class ConstantInstr extends Instr {
     }
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
-        //return _label != null && !_con.isConstant()? sb.append(_label): _con._print(sb);
-        return _con._print(sb);
+        return _label != null && !_con.isConstant()? sb.append(_label): _con._print(sb);
+        //return _con._print(sb);
     }
 
     @Override public Instr idealize() {return null;}

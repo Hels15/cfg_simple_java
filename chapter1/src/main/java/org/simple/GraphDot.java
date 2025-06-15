@@ -15,6 +15,7 @@ public class GraphDot {
         StringBuilder sb = new StringBuilder();
 
         sb.append("digraph G {\n\n");
+        sb.append("  rankdir=TB;\n");
         sb.append("  node [shape=none, fontname=Helvetica];\n\n");
 
         Set<BB> visited = new HashSet<>();
@@ -29,34 +30,24 @@ public class GraphDot {
             BB bb = queue.poll();
             if (!visited.add(bb)) continue;
 
+            // Assign a custom ID and store it
             String bbId = "bb" + clusterId;
+            String customLabel = String.format("BB #%d", clusterId);
             bbIds.put(bb, bbId);
 
             sb.append(String.format("  subgraph cluster_%d {\n", clusterId));
             sb.append("    style=filled;\n");
             sb.append("    color=lightgrey;\n");
-            sb.append(String.format("    label = \"type: #%s\";\n", bb._type.toString()));
+            sb.append(String.format("    label = \"%s: type: #%s\";\n", customLabel, bb._type.toString()));
             sb.append(String.format("    %s [label=<\n", bbId));
             sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n");
 
-            // smarter solution
-//            if(!bb._instrs.isEmpty()) {
-//                for(HashMap<String, Integer> scope: scopeA._scopes ) {
-//                    for(Map.Entry<String, Integer> entrySet : scope.entrySet()) {
-//                        String name = entrySet.getKey();
-//                        Integer nid = entrySet.getValue();
-//                        Instr instr = scopeA.in(nid);
-//                        if (instr != null) {
-//                            sb.append(String.format("        <TR><TD>%s: %s</TD></TR>\n", name, instr));
-//                        } else {
-//                            sb.append(String.format("        <TR><TD>%s: null</TD></TR>\n", name));
-//                        }
-//                    }
-//                }
-//            }
+            // Insert BB ID inside block
+            sb.append(String.format("        <TR><TD><b>%s</b></TD></TR>\n", customLabel));
+            sb.append(String.format("        <TR><TD><FONT COLOR=\"blue\">%s</FONT></TD></TR>\n", bb._label));
+
             for (Instr instr : bb._instrs) {
                 sb.append(String.format("        <TR><TD>i%d: %s</TD></TR>\n", instr._nid, instr.toString()));
-
             }
 
             sb.append("      </TABLE>\n");
@@ -70,17 +61,16 @@ public class GraphDot {
 
         // Add edges between BBs
         sb.append("\n");
-
         for (Map.Entry<BB, String> entrySet : bbIds.entrySet()) {
             BB bb = entrySet.getKey();
             String fromId = entrySet.getValue();
 
-                for (BB succ : bb._succs) {
-                    String toId = bbIds.get(succ);
-                    if (toId != null) {
-                        sb.append(String.format("  %s -> %s;\n", fromId, toId));
-                    }
+            for (BB succ : bb._succs) {
+                String toId = bbIds.get(succ);
+                if (toId != null) {
+                    sb.append(String.format("  %s -> %s;\n", fromId, toId));
                 }
+            }
         }
 
         sb.append("}\n");

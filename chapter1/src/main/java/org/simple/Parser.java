@@ -11,6 +11,7 @@ import java.awt.color.ICC_ColorSpace;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Stack;
 
 
 public class Parser {
@@ -37,15 +38,40 @@ public class Parser {
 
     ScopeInstr _continueScope;
     ScopeInstr _breakScope;
+    boolean _in_loop;
+
+    static class LoopContext {
+        BB header;
+        BB shared_exit;
+        BB real_exit;
+
+        LoopContext(BB header, BB shared_exit, BB real_exit) {
+            this.header = header;
+            this.shared_exit = shared_exit;
+            this.real_exit = real_exit;
+        }
+    }
+
+    Stack<LoopContext> _loopStack;
 
     public Parser(String source) {
         _lexer = new Lexer(source);
         _scope = new ScopeInstr();
+
         _entry = new EntryBB();
-        _cBB   = new BB(); // current basic block is the entry block
+        _entry._label = "entry";
+        _entry._kind = BB.BBKind.ENTRY;
+
+        _cBB   = new BB("cbb"); // current basic block is the entry block
+
         _exit  = new ExitBB();
+        _exit._label = "exit";
+        _entry._kind = BB.BBKind.EXIT;
+
         _returns  = new ArrayList<>();
         _continueScope = _breakScope = null;
+        _loopStack = new Stack<>();
+        _in_loop = false;
         _pass = new PassManager();
     }
     public Instr parse() {return parse(false);}
@@ -65,11 +91,14 @@ public class Parser {
 
         MultiReturnInstr instra = new MultiReturnInstr(_cBB);
 
-        // Run pass manager to clean up dead bbs
-        if(!Instr._disablePasses) {
-             _pass.bb_dead(_entry);
-             _pass.combine(_entry);
-        }
+        // As it turns out, these passes are needed to get the sound IR
+        // they are not optional
+
+         _pass.bb_dead_main(_entry);
+         _pass.bb_combine_main(_entry);
+
+        System.out.print("Dce Passes: " + _pass.dce_pass + "\n");
+        System.out.print("Combine Passes: " + _pass.dce_pass + "\n");
         // collect now returns from new graph
 //        _pass.collect_returns(_entry, _returns);
 
@@ -102,19 +131,48 @@ public class Parser {
     }
 
     private Instr parseBreak() {
-        return new BreakInstr(_cBB).peephole();
+        checkLoopActive();
+        _cBB.clear_succs();
+        _cBB.addSuccessor(_loopStack.peek().shared_exit);
+        // This flag will make sure that we wont
+        // add the bb that the break is as a predecessor
+        // for the succeeding if
+        _cBB._kind = BB.BBKind.BREAK;
+
+        BreakInstr br = new BreakInstr(_cBB);
+        _cBB.addInstr(br);
+        return br;
     }
+
     private Instr parseContinue() {
-        return new ContinueInstr(_cBB).peephole();
+        checkLoopActive();
+        _cBB.clear_succs();
+        _cBB.addSuccessor(_loopStack.peek().header);
+        // This flag will make sure that we wont
+        // add the bb that the break is as a predecessor
+        // for the succeeding if
+        _cBB._kind = BB.BBKind.CONTINUE;
+        ContinueInstr cont = new ContinueInstr(_cBB);
+        _cBB.addInstr(cont);
+        return cont;
+    }
+
+    void checkLoopActive() {
+        if(!_in_loop) throw Utils.TODO("No active loop for a break or continue");
     }
 
     private Instr parseWhile() {
         require("(");
-
+        _in_loop = true;
         // header(predecessor is the loop)
-        BB header = new BB();
+        BB header = new BB("header");
         _cBB.addSuccessor(header);
         _cBB = header;
+
+        _scope.ctrl(_cBB);
+
+        BB shared_exit = new BB("loop_exit"); // pre-made exit here as well
+        shared_exit._kind = BB.BBKind.LOOP_EXIT;
 
         ScopeInstr head = _scope.keep();
         _scope.ctrl(_cBB);
@@ -130,11 +188,17 @@ public class Parser {
 
         _cBB = if_instr.false_bb();
 
+
+        shared_exit.addSuccessor(_cBB);
+        _loopStack.push(new LoopContext(header, shared_exit, _cBB));
+
         var exit = _scope.dup();
 
         _cBB = if_instr.true_bb();
         parseStatement();
+
         _cBB.addSuccessor(header);
+        _cBB._kind = BB.BBKind.BACK_EDGE;
 
         // kills redundant phi(s)
         head.endLoop(_scope);
@@ -180,7 +244,7 @@ public class Parser {
         _scope = tScope;
 
         // create merge point
-        _cBB = new BB();
+        _cBB = new BB("merge");
         if_instr.addIfSuccessor(_cBB);
 
         // add Phi to current BB

@@ -66,8 +66,11 @@ public class IfInstr extends Instr {
     public void create_bbs(BB c) {
         Type trueType, falseType;
 
-        BB truebb = new BB();
-        BB falsebb = new BB();
+        BB truebb = new BB("true");
+        truebb._kind = BB.BBKind.CONDITIONAL_BLOCK;
+
+        BB falsebb = new BB("false");
+        falsebb._kind = BB.BBKind.CONDITIONAL_BLOCK;
 
         if (_type == TypeTuple.IF_FALSE) {
             trueType = Type.XCONTROL;
