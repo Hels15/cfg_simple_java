@@ -7,8 +7,8 @@ import java.util.BitSet;
 // Todo: visualise type
 // Just an instruction for visualisation purposes
 public class AssignmentInstr extends Instr{
-    String _name;
-    boolean _init;
+    public String _name;
+    public boolean _init;
     public AssignmentInstr(boolean init, String name, Instr expr) {
         super(expr);
         _name = name;

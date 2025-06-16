@@ -1056,8 +1056,10 @@ public class Test1 {
                         }
                         return arg;
                         """);
+                GraphEval eval = new GraphEval(Parser._entry);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
                 assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
+                assertEquals(2, eval.evaluate(1).value());
         }
 
         // Failed

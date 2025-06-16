@@ -22,6 +22,7 @@ public class Parser {
     public static ExitBB _exit;
     public static ScopeInstr _scope;
     public static PassManager _pass;
+    public static Instr _arg;
     private final HashSet<String> KEYWORDS = new HashSet<>(){{
         add("else");
         add("false");
@@ -81,7 +82,8 @@ public class Parser {
         _entry.addSuccessor(_cBB);
         // For now no jumping instructions
 
-        _scope.define(ScopeInstr.ARG0, new ConstantInstr(arg, ScopeInstr.ARG0, _cBB).peephole());
+        _arg = new ConstantInstr(arg, "arg", _cBB).peephole();
+        _scope.define(ScopeInstr.ARG0, _arg);
 
         var ret = parseBlock();
         // add it end the end when the graph is complete
