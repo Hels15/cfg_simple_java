@@ -40,7 +40,8 @@ public class PassManager {
             for(int i = 0; i < bb._succs.size(); i++) {
                 BB succ = bb._succs.get(i);
                 if(succ._kind == BB.BBKind.LOOP_HEADER) {
-                    bb._succs.remove(i);
+                    // get rid of the other edge, keep the loop header one
+                    bb._succs.remove(1-i);
                     succ._preds.remove(bb);
                     changed = true;
                 }

@@ -1135,7 +1135,7 @@ public class Test1 {
                         return arg;
                         """);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
-                assertEquals("return Phi(Loop6,arg,(Phi_arg+1));", instr.toString());
+                assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
 

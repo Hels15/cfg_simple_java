@@ -166,6 +166,7 @@ public class Parser {
         _in_loop = true;
         // header(predecessor is the loop)
         BB header = new BB("header");
+        header._kind = BB.BBKind.LOOP_HEADER;
         _cBB.addSuccessor(header);
         _cBB = header;
 
