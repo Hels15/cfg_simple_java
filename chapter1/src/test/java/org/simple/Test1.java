@@ -1055,11 +1055,12 @@ public class Test1 {
                                 break;
                         }
                         return arg;
-                        """);
+         """);
                 GraphEval eval = new GraphEval(Parser._entry);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
                 assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
-                assertEquals(2, eval.evaluate(1).value());
+                assertEquals(5, eval.evaluate(1).value());
+                assertEquals(10, eval.evaluate(6).value());
         }
 
         // Failed
@@ -1076,7 +1077,9 @@ public class Test1 {
                         }
                         return a;
                         """);
+                GraphEval eval = new GraphEval(Parser._entry);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals(1, eval.evaluate(1).value());
                 assertEquals("return Phi(bb4,1,(Phi_a+1));", instr.toString());
         }
 
@@ -1092,7 +1095,9 @@ public class Test1 {
                         }
                         return arg;
                         """);
+                GraphEval eval = new GraphEval(Parser._entry);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals(6, eval.evaluate(1).value());
                 assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
@@ -1106,7 +1111,9 @@ public class Test1 {
                         }
                         return arg;
                         """);
+                GraphEval eval = new GraphEval(Parser._entry);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals(6, eval.evaluate(1).value());
                 assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
@@ -1122,7 +1129,9 @@ public class Test1 {
                         }
                         return arg;
                         """);
+                GraphEval eval = new GraphEval(Parser._entry);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals(10, eval.evaluate(1).value());
                 assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
@@ -1136,7 +1145,9 @@ public class Test1 {
                         }
                         return arg;
                         """);
+                GraphEval eval = new GraphEval(Parser._entry);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals(10, eval.evaluate(1).value());
                 assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
@@ -1145,13 +1156,16 @@ public class Test1 {
                 Parser parser = new Parser("""
                         while( arg < 10 ) {
                             int a = arg+2;
+                            arg = arg + 1;
                             if( a > 4 )
                                 break;
                         }
                         return arg;
                         """);
+                GraphEval eval = new GraphEval(Parser._entry);
                 ReturnInstr instr = (ReturnInstr)parser.parse(true);
-                assertEquals("return arg;", instr.toString());
+                assertEquals(4, eval.evaluate(1).value());
+                assertEquals("return Phi(bb4,arg,(Phi_arg+1));", instr.toString());
         }
 
         @Test public void testBreakOutsideLoop() {
