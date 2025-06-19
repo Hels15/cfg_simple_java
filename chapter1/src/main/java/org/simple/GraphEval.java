@@ -115,8 +115,13 @@ public class GraphEval {
                     bb._kind == BB.BBKind.BREAK ||
                             (bb._succs.size() == 1 && bb._succs.getFirst()._kind == BB.BBKind.LOOP_EXIT);
 
-            // Technically here normalBackFlow and isLoopBackFlow should be the same
+            // Here make sure its actually a backedge need to extend the fales branch to also have a backedge successor
+            // This also triggers for the bb that is just before the loop header
+            // Todo: it should be backedge - Technically here normalBackFlow and isLoopBackFlow should be the same
             boolean NormalBackFlow = bb._succs.size() == 1 && bb._succs.getFirst()._kind == BB.BBKind.LOOP_HEADER;
+            if(NormalBackFlow == true && bb._nid != 2) {
+                System.out.print("Here");
+            }
             if (isLoopBackFlow || isLoopExit || NormalBackFlow) {
                 for (Instr _phi : inLoopCache.keySet()) {
                     if (cacheValues.containsKey(phi_idx((PhiInstr)_phi))) {

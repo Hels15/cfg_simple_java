@@ -3,10 +3,7 @@ package org.simple;
 import org.simple.bbs.BB;
 import org.simple.bbs.EntryBB;
 import org.simple.bbs.ExitBB;
-import org.simple.instructions.IfInstr;
-import org.simple.instructions.Instr;
-import org.simple.instructions.PhiInstr;
-import org.simple.instructions.ReturnInstr;
+import org.simple.instructions.*;
 import org.simple.type.Type;
 import org.simple.type.TypeTuple;
 
@@ -16,7 +13,7 @@ import java.util.*;
 public class PassManager {
     public int combine_pass = 0;
     public int dce_pass     = 0;
-    boolean bb_dead(BB bb) {
+    boolean bb_dead(BB bb, Parser parser) {
         boolean changed = false;
         int count_bb_instr = bb._instrs.size();
 
@@ -87,7 +84,7 @@ public class PassManager {
         if(count_bb_instr != bb._instrs.size()) changed = true;
         return changed;
     }
-    void bb_dead_main(EntryBB entry) {
+    void bb_dead_main(EntryBB entry, Parser parser) {
         Queue<BB> queue = new LinkedList<>();
         queue.add(entry);
 
@@ -98,7 +95,7 @@ public class PassManager {
 
             if(!visited.add(bb)) continue;
 
-            while(bb_dead(bb)) {
+            while(bb_dead(bb, parser)) {
                 dce_pass++;
             }
 
@@ -107,7 +104,7 @@ public class PassManager {
 
     }
 
-    boolean combine(BB bb) {
+    boolean combine(BB bb, Parser parser) {
            boolean changed = false;
            // if the next block has only one predecessor and it is the current block
            // then we can combine the two blocks and kill the successor, we also add the successors of the killed
@@ -123,10 +120,17 @@ public class PassManager {
                 bb._succs.addAll(succ._succs);
                 changed = true;
             }
+
+        // Since we do not want implicit jumps in the
+        if(bb._instrs.isEmpty() && bb._succs.size() == 1) {
+            bb._instrs.add(new GotoInstr(bb).keep().peephole());
+            changed = true;
+        }
+
         return changed;
     }
 
-    void bb_combine_main(EntryBB main) {
+    void bb_combine_main(EntryBB main, Parser parser) {
         Queue<BB> queue = new LinkedList<>();
         queue.add(main);
         Set<BB> visited = new HashSet<>();
@@ -136,7 +140,7 @@ public class PassManager {
 
             if(!visited.add(bb)) continue;
 
-            while(combine(bb)) {
+            while(combine(bb, parser)) {
                 combine_pass++;
             };
 

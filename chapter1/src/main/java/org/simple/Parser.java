@@ -96,8 +96,8 @@ public class Parser {
         // As it turns out, these passes are needed to get the sound IR
         // they are not optional
 
-         _pass.bb_dead_main(_entry);
-         _pass.bb_combine_main(_entry);
+         _pass.bb_dead_main(_entry, this);
+         _pass.bb_combine_main(_entry, this);
 
         System.out.print("Dce Passes: " + _pass.dce_pass + "\n");
         System.out.print("Combine Passes: " + _pass.dce_pass + "\n");
@@ -141,7 +141,7 @@ public class Parser {
         // for the succeeding if
         _cBB._kind = BB.BBKind.BREAK;
 
-        BreakInstr br = new BreakInstr(_cBB);
+        BreakInstr br = new BreakInstr(_cBB).keep();
         _cBB.addInstr(br);
         return br;
     }
@@ -163,6 +163,7 @@ public class Parser {
         if(!_in_loop) throw Utils.TODO("No active loop for a break or continue");
     }
 
+    String src() {return new String(_lexer._input);}
     private Instr parseWhile() {
         require("(");
         _in_loop = true;
@@ -208,6 +209,8 @@ public class Parser {
 
         head.unkeep().kill();
 
+        // Todo: allow bbs to have multiple kinds
+        // Todo: false_bb takes over so the back_edge block gets lost
         _cBB = if_instr.false_bb();
         _scope = exit;
 
@@ -313,7 +316,7 @@ public class Parser {
     }
 
     private Instr showGraph() {
-        System.out.println(new GraphDot().generateDotOutput(_entry, _scope));
+        System.out.println(new GraphDot().generateDotOutput(_entry, this));
         return null;
     }
 

@@ -22,7 +22,7 @@ abstract public class BoolInstr extends Instr{
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
         in(0)._print0(sb.append("("), visited);
-        in(1)._print0(sb.append(gop()).append(this instanceof EQ ? "" : ";"),visited);
+        in(1)._print0(sb.append(op()),visited);
         return sb.append(")");
     }
 

@@ -5,22 +5,22 @@ import org.simple.type.Type;
 
 import java.util.BitSet;
 
-public class BreakInstr extends Instr {
+public class GotoInstr extends Instr {
 
     // `c` represents the current basic block; unused here but passed for interface consistency.
-    public BreakInstr(BB c) {
-        super();
-        _bb = c;
+    public GotoInstr(BB c) {
+      super();
+      _bb = c;
     }
 
     @Override
     public String label() {
-        return "Break";
+        return "Goto";
     }
 
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
-        return sb.append(label());
+        return sb.append("Goto: bb").append(_bb._succs.getFirst()._nid);
     }
 
     @Override

@@ -31,7 +31,7 @@ public class Test1 {
         // get Entry block
         // print graph
         GraphDot graphDot = new GraphDot();
-        System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
+        System.out.println(graphDot.generateDotOutput(Parser._entry, parser));
         }
 
         @Test
@@ -41,7 +41,7 @@ public class Test1 {
 
                 assertEquals("return 3;", ret.print());
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, parser));
         }
 
         @Test
@@ -51,7 +51,7 @@ public class Test1 {
 
                 assertEquals("return -1;", ret.print());
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, parser));
         }
 
 
@@ -61,7 +61,7 @@ public class Test1 {
                 ReturnInstr ret = (ReturnInstr)parser.parse();
                 assertEquals("return 6;", ret.print());
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, parser));
         }
 
         @Test
@@ -72,7 +72,7 @@ public class Test1 {
                 assertEquals("return 2;", ret.print());
 
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, parser));
         }
 
         @Test
@@ -81,7 +81,7 @@ public class Test1 {
                 ReturnInstr ret = (ReturnInstr)parser.parse();
                 assertEquals("return -2;", ret.print());
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, parser));
         }
 
         @Test
@@ -92,7 +92,7 @@ public class Test1 {
                 assertEquals("return 2;", ret.print());
 
                 GraphDot graphDot = new GraphDot();
-                System.out.println(graphDot.generateDotOutput(Parser._entry, Parser._scope));
+                System.out.println(graphDot.generateDotOutput(Parser._entry, parser));
         }
         @Test
         public void testVarDecl() {
