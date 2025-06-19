@@ -286,6 +286,7 @@ public class Parser {
         ReturnInstr ret = (ReturnInstr)new ReturnInstr(_cBB, expr).peephole();
         _cBB.addInstr(ret);
 
+        _cBB._kind = BB.BBKind.RETURN;
         // Todo: Better solution  - maybe need graph to collect return after all optimisations
         // Todo: see collect return for the current attempt
         if(!Instr._disablePeephole) {
