@@ -1185,6 +1185,39 @@ public class Test1 {
                 }
         }
 
+        // More GVN examples
+        @Test public void testGVN1() {
+                Parser parser = new Parser(
+        """
+                int x = arg + arg;
+                if(arg < 10) {
+                    return arg + arg;
+                }
+                else {
+                    x = x + 1;
+                }
+                return x;
+               """
+                );
+                GraphEval eval = new GraphEval(Parser._entry);
+                ReturnInstr ret = (ReturnInstr)parser.parse(true);
+                assertEquals("Stop[ return (arg*2); return (Mul+1); ]", ret.toString());
+                assertEquals(10, eval.evaluate(1).value());
+                assertEquals(10, eval.evaluate(11).value());
+        }
+
+        @Test public void testGVN2() {
+                Parser parser = new Parser(
+                        """
+                        return arg*arg-arg*arg;
+                        """
+                );
+                GraphEval eval = new GraphEval(Parser._entry);
+                ReturnInstr ret = (ReturnInstr)parser.parse(true);
+                assertEquals("return 0;", ret.toString());
+                assertEquals(0, eval.evaluate(1).value());
+        }
+        // WorkList algo here
 
 }
 

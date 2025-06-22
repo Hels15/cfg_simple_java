@@ -1,5 +1,7 @@
 package org.simple.type;
 
+import org.simple.Utils;
+
 public class Type{
     static final byte TBOT    = 0;
     static final byte TTOP    = 1;
@@ -29,6 +31,22 @@ public class Type{
 
         return Type.BOTTOM;
     }
+
+    public final Type join(Type t) {
+        if( this==t ) return this;
+        return dual().meet(t.dual()).dual();
+    }
+    public Type dual() {
+        return switch( _type ) {
+            case TBOT -> TOP;
+            case TTOP -> BOTTOM;
+            case TCTRL -> XCONTROL;
+            case TXCTRL -> CONTROL;
+            default -> throw Utils.TODO("Should not reach here!"); // Should not reach here
+        };
+    }
+
+    public boolean isa(Type t) {return meet(t) == t;}
     protected Type xmeet(Type t) {
         assert is_simple();
         if(_type == TBOT || t._type == TTOP) return this;

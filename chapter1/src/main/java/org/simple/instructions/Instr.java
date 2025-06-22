@@ -23,7 +23,16 @@ public abstract class Instr {
     private static int UNIQUE_ID = 1;
 
 
+    public static final HashMap<Instr, Instr> GVN = new HashMap<>();
+
     public abstract String label();
+
+    // Cached hash.  If zero, then not computed AND this Node is NOT in the GVN
+    // table - and can have its edges hacked (which will change his hash
+    // anyway).  If Non-Zero then this Node is IN the GVN table, or is being
+    // probed to see if it can be inserted.  His edges are "locked", because
+    // hacking his edges will change his hash.
+    int _hash;
 
     Instr(Instr... inputs) {
         _nid = UNIQUE_ID++;
@@ -100,6 +109,29 @@ public abstract class Instr {
     boolean isDead() { return isUnused() && nIns()==0 && _type==null; }
 
 
+    // Subclasses add extra checks (such as ConstantNodes have same constant),
+    // and can assume "this!=n" and has the same Java class.
+    boolean eq( Instr i) { return true; }
+
+    @Override public final boolean equals(Object o) {
+        if( o==this ) return true;
+        if( o.getClass() != getClass() ) return false;
+        Instr n = (Instr)o;
+        int len = _inputs.size();
+        if( len != n._inputs.size() ) return false;
+        for( int i=0; i<len; i++ )
+            if( in(i) != n.in(i) )
+                return false;
+        return eq(n);
+    }
+
+    void unlock() {
+        if(_hash == 0) return;
+        Instr old = GVN.remove(this);
+        assert old == this;
+        _hash = 0;
+    }
+
     void popN(int n ) {
         for (int i = 0; i < n; i++) {
             Instr old_def = _inputs.removeLast();
@@ -109,7 +141,7 @@ public abstract class Instr {
         }
     }
 
-    Instr setDef(int idx, Instr new_def) {
+    public Instr setDef(int idx, Instr new_def) {
         Instr old_def = in(idx);
         if(old_def == new_def) return this;
 
@@ -164,19 +196,65 @@ public abstract class Instr {
 
     public boolean pure() {return true;}
     public final Instr peephole() {
-        Type type = _type = compute();
-
-        if(_disablePeephole) return this;
-
-        // Replace constant computations from non-constants with a constant node
-        if (!(this instanceof ConstantInstr) && type.isConstant()) {
-            return  deadCodeElim(new ConstantInstr(type, _bb).peephole());
+        if(_disablePeephole) {
+            _type = compute();
+            return this;
         }
 
-        Instr n = idealize();
-        if(n != null) return deadCodeElim(n.peephole());
-
-        return this;
+        Instr n = peepholeOpt();
+        return n == null ? this: deadCodeElim(n.peephole());
 
     }
+    public Type setType(Type type) {
+        Type old = _type;
+        // gradual type increment
+        assert old == null || type.isa(old);
+        if(old == type) return old;
+        _type = type;
+        // Iterpeeps call here
+        // move deps to worklist
+        return old;
+    }
+
+    public final Instr peepholeOpt() {
+        Type old = setType(compute());
+
+        if(!(this instanceof ConstantInstr) && _type.isConstant())
+            return new ConstantInstr(_type, _bb).peephole();
+
+        if(_hash == 0) {
+            Instr n = GVN.get(this);
+            if(n == null) {
+                GVN.put(this, this);
+            }
+            else {
+                // Because of random worklist ordering, the two equal nodes
+                // might have different types.  Because of monotonicity, both
+                // types are valid.  To preserve monotonicity, the resulting
+                // shared Node has to have the best of both types.
+                n.setType(n._type.join(_type));
+                _hash = 0;
+                return deadCodeElim(n);
+            }
+
+        }
+        Instr n = idealize();
+        if(n != null) {
+            return n;
+        }
+        return old ==_type ? null: this;
+    }
+
+    @Override public final int hashCode() {
+        if(_hash != 0) return _hash;
+        int hash = hash();
+        for(Instr n: _inputs) {
+            if(n!= null) hash = hash ^ (hash<<17) ^ (hash>>13) ^ n._nid;
+
+        }
+        if(hash == 0) hash = 0xDEADBEEF; // Bad hash from subclass; use some junk thing
+        return (_hash = hash);
+    }
+
+    int hash() {return 0;}
 }
