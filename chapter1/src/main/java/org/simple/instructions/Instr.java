@@ -16,7 +16,8 @@ public abstract class Instr {
     public Type _type;
 
     public static boolean _disablePeephole = false;
-    public static boolean _disablePasses = false;
+    public static boolean _disableGvn      = false;
+    public static boolean _disablePasses   = false;
 
     public final ArrayList<Instr> _outputs;
 
@@ -222,21 +223,22 @@ public abstract class Instr {
         if(!(this instanceof ConstantInstr) && _type.isConstant())
             return new ConstantInstr(_type, _bb).peephole();
 
-        if(_hash == 0) {
-            Instr n = GVN.get(this);
-            if(n == null) {
-                GVN.put(this, this);
-            }
-            else {
-                // Because of random worklist ordering, the two equal nodes
-                // might have different types.  Because of monotonicity, both
-                // types are valid.  To preserve monotonicity, the resulting
-                // shared Node has to have the best of both types.
-                n.setType(n._type.join(_type));
-                _hash = 0;
-                return deadCodeElim(n);
-            }
+        if(!_disableGvn) {
+            if(_hash == 0) {
+                Instr n = GVN.get(this);
+                if (n == null) {
+                    GVN.put(this, this);
+                } else {
+                    // Because of random worklist ordering, the two equal nodes
+                    // might have different types.  Because of monotonicity, both
+                    // types are valid.  To preserve monotonicity, the resulting
+                    // shared Node has to have the best of both types.
+                    n.setType(n._type.join(_type));
+                    _hash = 0;
+                    return deadCodeElim(n);
+                }
 
+            }
         }
         Instr n = idealize();
         if(n != null) {

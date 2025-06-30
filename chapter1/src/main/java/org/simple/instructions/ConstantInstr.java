@@ -29,5 +29,11 @@ public class ConstantInstr extends Instr {
         //return _con._print(sb);
     }
 
+    @Override
+    boolean eq(Instr n) {
+        ConstantInstr con = (ConstantInstr)n;
+        return _con == con._con;
+    }
+
     @Override public Instr idealize() {return null;}
 }

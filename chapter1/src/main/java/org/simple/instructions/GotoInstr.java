@@ -24,6 +24,13 @@ public class GotoInstr extends Instr {
     }
 
     @Override
+    boolean eq(Instr i) {
+       GotoInstr gotoi = (GotoInstr)i;
+       // compare bbs based on ID
+       return gotoi._bb._succs.getFirst()._nid == _bb._succs.getFirst()._nid;
+    }
+
+    @Override
     public Type compute() {
         return Type.BOTTOM;
     }

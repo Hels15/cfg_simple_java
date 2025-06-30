@@ -331,18 +331,17 @@ public class Parser {
             int idx = 0;
             boolean negate = false;
             if(false);
-            else if(match("==")) { idx=2;  lhs = new BoolInstr.EQ(_cBB, lhs, null); }
-            else if(match("!=")) { idx=2;  lhs = new BoolInstr.EQ(_cBB, lhs, null); negate = true;}
-            else if(match("<=")) { idx=2;  lhs = new BoolInstr.LE(_cBB, lhs, null); }
-            else if(match("<"))  { idx=2;  lhs = new BoolInstr.LT(_cBB, lhs, null); }
-            else if(match(">=")) { idx=1;  lhs = new BoolInstr.LE(_cBB, null, lhs); }
-            else if(match(">"))  { idx=1;  lhs = new BoolInstr.LT(_cBB, null, lhs); }
+            else if(match("==")) { idx=1;  lhs = new BoolInstr.EQ(_cBB, lhs, null); }
+            else if(match("!=")) { idx=1;  lhs = new BoolInstr.EQ(_cBB, lhs, null); negate = true;}
+            else if(match("<=")) { idx=1;  lhs = new BoolInstr.LE(_cBB, lhs, null); }
+            else if(match("<"))  { idx=1;  lhs = new BoolInstr.LT(_cBB, lhs, null); }
+            else if(match(">=")) { lhs = new BoolInstr.LE(_cBB, null, lhs); }
+            else if(match(">"))  { lhs = new BoolInstr.LT(_cBB, null, lhs); }
             else break;
 
             lhs.setDef(idx, parseAddition());
             lhs = lhs.peephole();
             if(negate) lhs = new NotInstr(_cBB, lhs).peephole();
-            _cBB.addInstr(lhs);
         }
 
         return lhs;
@@ -355,9 +354,8 @@ public class Parser {
             else if(match("+")) lhs = new AddInstr(_cBB, lhs, null);
             else if(match("-")) lhs = new SubInstr(_cBB, lhs, null);
             else break;
-            lhs.setDef(2, parseMultiplication());
+            lhs.setDef(1, parseMultiplication());
             lhs = lhs.peephole();
-            _cBB.addInstr(lhs);
         }
         return lhs;
     }
@@ -369,7 +367,7 @@ public class Parser {
             else if(match("*")) lhs = new MulInstr(_cBB, lhs, null);
             else if(match("/")) lhs = new DivInstr(_cBB, lhs, null);
             else break;
-            lhs.setDef(2, parseUnary());
+            lhs.setDef(1, parseUnary());
             lhs = lhs.peephole();
             _cBB.addInstr(lhs);
         }
@@ -397,13 +395,11 @@ public class Parser {
 
         if (matchx("true")) {
             var instr = new ConstantInstr(TypeInteger.constant(1), _cBB).peephole();
-            _cBB.addInstr(instr);
             return instr;
         }
 
         if (matchx("false")) {
             var instr = new ConstantInstr(TypeInteger.constant(0), _cBB).peephole();
-            _cBB.addInstr(instr);
             return instr;
         }
 
@@ -417,7 +413,6 @@ public class Parser {
 
     private ConstantInstr parseIntegerLiteral() {
         Instr constant = new ConstantInstr(_lexer.parseNumber(), _cBB).peephole();
-        _cBB.addInstr(constant);
         return (ConstantInstr)constant;
 
     }

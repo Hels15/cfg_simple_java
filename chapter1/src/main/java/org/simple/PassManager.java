@@ -9,14 +9,13 @@ import org.simple.type.TypeTuple;
 
 import java.util.*;
 
-// maybe a work-list that works until a fixed point
+// WorkList operates in FIFO order, traversal algo is bfs.
 public class PassManager {
     public int combine_pass = 0;
     public int dce_pass     = 0;
     boolean bb_dead(BB bb, Parser parser) {
         boolean changed = false;
         int count_bb_instr = bb._instrs.size();
-
         // if a basic block ends with a break it can only have one successor(the shared exit)
         // this opt gets rid of the other successor
         if(bb._kind == BB.BBKind.BREAK && bb._succs.size() == 2) {
@@ -84,22 +83,22 @@ public class PassManager {
         if(count_bb_instr != bb._instrs.size()) changed = true;
         return changed;
     }
+
     void bb_dead_main(EntryBB entry, Parser parser) {
-        Queue<BB> queue = new LinkedList<>();
-        queue.add(entry);
+        Utils.WorkList<BB> wl = new Utils.WorkList<BB>();
+        wl.push(entry);
 
-        Set<BB> visited = new HashSet<>();
+        Set<BB> visited = new HashSet<BB>();
 
-        while (!queue.isEmpty()) {
-            BB bb = queue.poll();
-
+        while (!wl.isEmpty()) {
+            BB bb = wl.pop();
+            // still needed
             if(!visited.add(bb)) continue;
-
             while(bb_dead(bb, parser)) {
                 dce_pass++;
             }
 
-            queue.addAll(bb._succs);
+            wl.addAll(bb._succs);
         }
 
     }
@@ -121,7 +120,7 @@ public class PassManager {
                 changed = true;
             }
 
-        // Since we do not want implicit jumps in the
+        // Since we do not want implicit jumps in the IR
         if(bb._instrs.isEmpty() && bb._succs.size() == 1) {
             bb._instrs.add(new GotoInstr(bb).keep().peephole());
             changed = true;
@@ -131,20 +130,18 @@ public class PassManager {
     }
 
     void bb_combine_main(EntryBB main, Parser parser) {
-        Queue<BB> queue = new LinkedList<>();
-        queue.add(main);
-        Set<BB> visited = new HashSet<>();
+        Utils.WorkList<BB> wl = new Utils.WorkList<BB>();
+        wl.push(main);
 
-        while (!queue.isEmpty()) {
-            BB bb = queue.poll();
+        Set<BB> visited = new HashSet<BB>();
 
+        while (!wl.isEmpty()) {
+            BB bb = wl.pop();
+            // still needed
             if(!visited.add(bb)) continue;
+            while(combine(bb, parser)) {combine_pass++;}
 
-            while(combine(bb, parser)) {
-                combine_pass++;
-            };
-
-            queue.addAll(bb._succs);
+            wl.addAll(bb._succs);
         }
     }
 }
