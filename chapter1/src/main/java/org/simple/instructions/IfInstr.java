@@ -104,6 +104,9 @@ public class IfInstr extends Instr {
     //         merge
     // Add merge BB as a successor to both true_bb and false_bb
     public void addIfSuccessor(BB merge) {
+        // only add merge as a successor if its not terminated already
+
+        // have a special case where if its a return then the only successor is the exit
         true_bb().addSuccessor(merge);
         false_bb().addSuccessor(merge);
 

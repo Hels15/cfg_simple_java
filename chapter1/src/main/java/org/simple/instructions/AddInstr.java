@@ -20,6 +20,12 @@ public class AddInstr extends Instr{
         }
         return Type.BOTTOM;
     }
+
+    @Override
+    public boolean graphVis() {
+       return false;
+    }
+
     @Override public Instr idealize() {
 
         Instr lhs = in(0);

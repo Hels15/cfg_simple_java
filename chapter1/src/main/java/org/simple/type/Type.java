@@ -2,6 +2,8 @@ package org.simple.type;
 
 import org.simple.Utils;
 
+import java.util.HashMap;
+
 public class Type{
     static final byte TBOT    = 0;
     static final byte TTOP    = 1;
@@ -13,14 +15,45 @@ public class Type{
 
     public final byte _type;
 
+    private int _hash;
+
     public boolean is_simple() {return _type < TSIMPLE;}
     private static final String[] STRS = new String[]{"Bot", "Top", "Ctrl", "~Ctrl"};
     protected Type(byte type) {_type = type;}
 
-    public static final Type BOTTOM   = new Type(TBOT);
-    public static final Type TOP      = new Type(TTOP);
-    public static final Type CONTROL  = new Type(TCTRL);
-    public static final Type XCONTROL = new Type(TXCTRL);
+    static final HashMap<Type, Type> INTERN = new HashMap<>();
+
+    public static final Type BOTTOM   = new Type(TBOT).intern();
+    public static final Type TOP      = new Type(TTOP).intern();
+    public static final Type CONTROL  = new Type(TCTRL).intern();
+    public static final Type XCONTROL = new Type(TXCTRL).intern();
+
+
+    protected <T extends Type> T intern() {
+        T nnn = (T)INTERN.get(this);
+        if(nnn == null) INTERN.put(nnn=(T)this, this);
+        return nnn;
+    }
+
+    @Override
+    public final int hashCode() {
+        if( _hash!=0 ) return _hash;
+        _hash = hash();
+        if( _hash==0 ) _hash = 0xDEADBEEF; // Bad hash from subclass; use some junk thing
+        return _hash;
+    }
+
+    @Override
+    public final boolean equals( Object o ) {
+        if( o==this ) return true;
+        if( !(o instanceof Type t)) return false;
+        if( _type != t._type ) return false;
+        return eq(t);
+    }
+
+    boolean eq(Type t) { return true; }
+
+    int hash() { return _type; }
 
     public Type meet(Type t) {
         if(t == this) return this;

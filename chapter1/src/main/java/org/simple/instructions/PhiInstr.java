@@ -104,7 +104,7 @@ public class PhiInstr extends Instr{
     private Instr singleUniqueInput() {
         Instr live = null;
         for(int i = 0; i < nIns(); i++) {
-        if(in(i) != this) {
+        if(in(i) != this && _bb._preds.get(i)._type != Type.XCONTROL) {
             if(live == null || live == in(i)) live = in(i);
             else return null;
         }

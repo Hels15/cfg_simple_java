@@ -51,6 +51,10 @@ abstract public class BoolInstr extends Instr{
         return null;
     }
 
+    @Override public boolean graphVis() {
+        return false;
+    }
+
     public static class EQ extends BoolInstr { public EQ(BB c, Instr lhs, Instr rhs) { super(c, lhs,rhs); } String op() { return "=="; } String gop() {return "=";   } boolean doOp(long lhs, long rhs) { return lhs == rhs; } Instr copy(BB c, Instr lhs, Instr rhs) {return new EQ(c, lhs, rhs);}}
     public static class LT extends BoolInstr { public LT(BB c, Instr lhs, Instr rhs) { super(c, lhs,rhs); } String op() { return "<" ; } String gop() {return "&lt"; } boolean doOp(long lhs, long rhs) { return lhs <  rhs; } Instr copy(BB c, Instr lhs, Instr rhs) {return new LT(c, lhs, rhs);}}
     public static class LE extends BoolInstr { public LE(BB c, Instr lhs, Instr rhs) { super(c, lhs,rhs); } String op() { return "<="; } String gop() {return "&le"; }boolean doOp(long lhs, long rhs) { return lhs <= rhs; } Instr copy(BB c, Instr lhs, Instr rhs)  {return new LE(c, lhs, rhs);}}

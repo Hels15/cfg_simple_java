@@ -4,6 +4,8 @@ import org.simple.Utils;
 import org.simple.bbs.BB;
 import org.simple.type.Type;
 
+import javax.sound.midi.SysexMessage;
+import javax.swing.plaf.synth.SynthTableHeaderUI;
 import java.util.*;
 
 // Todo add label
@@ -88,6 +90,9 @@ public abstract class Instr {
         }
         return m;
     }
+    // Use this to indicate that the instruction should be included in the graph visualization.
+
+    public boolean graphVis() {return true;}
     public abstract Type compute();
     public abstract Instr idealize();
 
@@ -219,7 +224,6 @@ public abstract class Instr {
 
     public final Instr peepholeOpt() {
         Type old = setType(compute());
-
         if(!(this instanceof ConstantInstr) && _type.isConstant())
             return new ConstantInstr(_type, _bb).peephole();
 

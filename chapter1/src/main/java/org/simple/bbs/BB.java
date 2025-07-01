@@ -42,6 +42,8 @@ public class BB {
     public final int _nid;
     private static int UNIQUE_BB_ID = 1;
 
+    // Flag so that optimiser won't get stuck, eg if its deleted already stop iterating over
+    public boolean _deleted;
     public final ArrayList<BB> _preds;
 
     public final ArrayList<Instr> _instrs;
@@ -57,6 +59,7 @@ public class BB {
         _label = label; // no label by default
         _type = Type.CONTROL; // default type
         _nid = UNIQUE_BB_ID++;
+        _deleted = false;
     }
     public BB()
     {
@@ -74,6 +77,10 @@ public class BB {
             pred._succs.remove(this);
         }
         _preds.clear();
+    }
+
+    public boolean not_terminated() {
+        return !(_instrs.getLast() instanceof ReturnInstr);
     }
 
     public void addSuccessor(BB bb) {

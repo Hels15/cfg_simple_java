@@ -47,9 +47,11 @@ public class GraphDot {
             sb.append("        <tr><td bgcolor=\"lightblue\" align=\"left\">").append(bbId).append("</td></tr>\n");
 
             for (Instr instr : bb._instrs) {
-                sb.append("        <tr><td align=\"left\">")
-                        .append(escapeHtml(instr.print()))
-                        .append("</td></tr>\n");
+                if(instr.graphVis()) {
+                    sb.append("        <tr><td align=\"left\">")
+                            .append(escapeHtml(instr.print()))
+                            .append("</td></tr>\n");
+                }
             }
 
             sb.append("      </table>\n");

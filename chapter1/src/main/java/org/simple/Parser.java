@@ -283,6 +283,7 @@ public class Parser {
 
     private Instr parseReturn() {
         var expr = require(parseExpression(), ";");
+
         ReturnInstr ret = (ReturnInstr)new ReturnInstr(_cBB, expr).peephole();
         _cBB.addInstr(ret);
 
@@ -296,7 +297,7 @@ public class Parser {
         }
 
         _cBB.addSuccessor(_exit);
-
+        _cBB._type = Type.XCONTROL;
         return ret;
     }
 
@@ -342,6 +343,7 @@ public class Parser {
             lhs.setDef(idx, parseAddition());
             lhs = lhs.peephole();
             if(negate) lhs = new NotInstr(_cBB, lhs).peephole();
+            _cBB.addInstr(lhs);
         }
 
         return lhs;
@@ -356,7 +358,9 @@ public class Parser {
             else break;
             lhs.setDef(1, parseMultiplication());
             lhs = lhs.peephole();
+            _cBB.addInstr(lhs);
         }
+
         return lhs;
     }
 
@@ -407,12 +411,14 @@ public class Parser {
         if (name == null) throw errorSyntax("an identifier or expression");
 
         Instr n = _scope.lookup(name);
+
         if(n!= null) return n;
         throw error("Undefined name '" + name + "'");
     }
 
     private ConstantInstr parseIntegerLiteral() {
         Instr constant = new ConstantInstr(_lexer.parseNumber(), _cBB).peephole();
+        _cBB.addInstr(constant);
         return (ConstantInstr)constant;
 
     }

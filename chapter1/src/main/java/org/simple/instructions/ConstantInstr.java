@@ -18,7 +18,7 @@ public class ConstantInstr extends Instr {
     }
     @Override
     public String label() {
-        return ""+_con;
+        return _label != null ? _label : ""+_con;
     }
     @Override public Type compute() {
         return _con;
@@ -27,6 +27,7 @@ public class ConstantInstr extends Instr {
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
         return _label != null && !_con.isConstant()? sb.append(_label): _con._print(sb);
         //return _con._print(sb);
+
     }
 
     @Override
@@ -34,6 +35,14 @@ public class ConstantInstr extends Instr {
         ConstantInstr con = (ConstantInstr)n;
         return _con == con._con;
     }
+
+    @Override int hash() {
+        return _con.hashCode();
+    }
+    @Override public boolean graphVis() {
+        return false;
+    }
+
 
     @Override public Instr idealize() {return null;}
 }

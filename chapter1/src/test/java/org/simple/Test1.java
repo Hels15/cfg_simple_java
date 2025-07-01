@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.simple.bbs.BB;
 import org.simple.bbs.EntryBB;
 import org.simple.instructions.Instr;
+import org.simple.instructions.MulInstr;
 import org.simple.instructions.MultiReturnInstr;
 import org.simple.instructions.ReturnInstr;
 import org.simple.type.TypeInteger;
@@ -1199,11 +1200,16 @@ public class Test1 {
                 return x;
                """
                 );
+
+                MultiReturnInstr ret = (MultiReturnInstr)parser.parse(true);
                 GraphEval eval = new GraphEval(Parser._entry);
-                ReturnInstr ret = (ReturnInstr)parser.parse(true);
-                assertEquals("Stop[ return (arg*2); return (Mul+1); ]", ret.toString());
-                assertEquals(10, eval.evaluate(1).value());
-                assertEquals(10, eval.evaluate(11).value());
+                //System.out.print(IRPrinter.prettyPrint(Parser._entry));
+                GraphDot graph = new GraphDot();
+                System.out.print(graph.generateDotOutput(Parser._entry, parser));
+                assertEquals("[return (arg*2); return (Mul+1);]", ret.toString());
+                // infinite loop
+                assertEquals(2, eval.evaluate(1).value());
+                assertEquals(23, eval.evaluate(11).value());
         }
 
         @Test public void testGVN2() {

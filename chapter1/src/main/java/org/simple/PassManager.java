@@ -45,20 +45,28 @@ public class PassManager {
         }
 
         // if the predecessor of the current block is dead, mark current block as dead
-        if(bb._preds.size() == 1 && bb._preds.getFirst().dead()) {
+        if(bb._preds.size() == 1 && bb._preds.getFirst().dead() && !bb._deleted) {
             bb._type = Type.XCONTROL;
+            bb._deleted = true; // for optimiser not to get stuck
             changed = true;
         }
 
         // if the current block is dead and it is not an exit block
         // then we can remove it from the graph
-        if(bb.dead() && !(bb instanceof ExitBB)) {
-            // remove dead BB
-            bb._preds.forEach(pred -> pred._succs.remove(bb));
-            bb._succs.forEach(succ -> succ._preds.remove(bb));
-            bb._instrs.clear();
-            changed = true;
-        }
+        // Todo: this is stuck in here bb is dead but it keeps on iterating here
+//        if(bb.dead() && !(bb instanceof ExitBB) && !bb._deleted) {
+//            // remove dead BB
+//            bb._preds.forEach(pred -> pred._succs.remove(bb));
+//            bb._succs.forEach(succ -> succ._preds.remove(bb));
+//
+//            bb._succs.clear();
+//            bb._preds.clear();
+//
+//            bb._instrs.clear();
+//            // Todo: should probably actually get rid of it
+//            bb._deleted = true;
+//            changed = true;
+//        }
 
         // If one of the predecessors of the phi is dead, then just return the live input.
         for (int i = 0; i < bb._instrs.size(); i++) {
@@ -68,6 +76,10 @@ public class PassManager {
                 if (phi._bb._preds.getFirst().dead()) value = phi.in(phi.nIns() - 1);
                 if (phi._bb._preds.getLast().dead())  value = phi.in(0);
                 if (value != null) {bb._instrs.set(i, value); changed = true;}
+            }
+            if(instr instanceof ReturnInstr && bb._succs.size() > 1) {
+                bb._succs.removeIf(bbl -> !(bbl instanceof ExitBB));
+                changed = true;
             }
         }
 
@@ -88,10 +100,14 @@ public class PassManager {
         Utils.WorkList<BB> wl = new Utils.WorkList<BB>();
         wl.push(entry);
 
+        GraphDot vis = new GraphDot();
+        System.out.print(vis.generateDotOutput(entry, parser));
+
         Set<BB> visited = new HashSet<BB>();
 
         while (!wl.isEmpty()) {
             BB bb = wl.pop();
+
             // still needed
             if(!visited.add(bb)) continue;
             while(bb_dead(bb, parser)) {

@@ -19,6 +19,10 @@ public class MinusInstr extends Instr{
     @Override public Instr idealize() {return null;}
 
 
+    @Override public boolean graphVis() {
+        return false;
+    }
+
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
         in(0)._print0(sb.append("(-"), visited);

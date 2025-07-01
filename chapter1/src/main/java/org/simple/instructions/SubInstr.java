@@ -30,6 +30,10 @@ public class SubInstr extends Instr{
         return sb.append(")");
     }
 
+    @Override public boolean graphVis() {
+        return false;
+    }
+
     @Override
     public Instr idealize() { return null; }
 }

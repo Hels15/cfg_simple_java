@@ -24,6 +24,10 @@ public class NotInstr extends Instr{
         return Type.BOTTOM;
     }
 
+    @Override public boolean graphVis() {
+        return false;
+    }
+
     @Override
     public Instr idealize() { return null; }
 }

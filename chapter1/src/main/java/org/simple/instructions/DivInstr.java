@@ -23,6 +23,10 @@ public class DivInstr extends Instr{
         return Type.BOTTOM;
     }
 
+    @Override public boolean graphVis() {
+        return false;
+    }
+
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
         in(0)._print0(sb.append("("), visited);
