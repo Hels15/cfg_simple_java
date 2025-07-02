@@ -75,6 +75,7 @@ public class Parser {
         _in_loop = false;
         _pass = new PassManager();
     }
+
     public Instr parse() {return parse(false);}
     public Instr parse(boolean show, TypeInteger arg) {
 

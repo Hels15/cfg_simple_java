@@ -48,9 +48,9 @@ public class AddInstr extends Instr{
             return new AddInstr(_bb, new AddInstr(_bb, lhs,add.in(0)).peephole(), add.in(1));
 
         if( !(lhs instanceof AddInstr) )
-            return spline_cmp(lhs,rhs) ? swap12() : phiCon(_bb,this, true);
+            return spline_cmp(lhs,rhs, this) ? swap12() : phiCon(_bb,this, true);
 
-        if( lhs.in(1)._type.isConstant() && t2.isConstant() )
+        if( lhs.in(1).addDep(this)._type.isConstant() && t2.isConstant() )
             return new AddInstr(_bb, lhs.in(0),new AddInstr(_bb, lhs.in(1),rhs).peephole());
 
         Instr phicon = phiCon(_bb, this, true);
@@ -58,12 +58,12 @@ public class AddInstr extends Instr{
         return null;
     }
 
-    static boolean spline_cmp(Instr hi, Instr lo) {
+    static boolean spline_cmp(Instr hi, Instr lo, Instr dep) {
         if(lo._type.isConstant()) return false;
         if(hi._type.isConstant()) return true;
 
-        if(lo instanceof PhiInstr && lo.allCons()) return false;
-        if(hi instanceof PhiInstr && hi.allCons()) return true;
+        if(lo instanceof PhiInstr && lo.allCons(dep)) return false;
+        if(hi instanceof PhiInstr && hi.allCons(dep)) return true;
 
         if( lo instanceof PhiInstr && !(hi instanceof PhiInstr) ) return true;
         if( hi instanceof PhiInstr && !(lo instanceof PhiInstr) ) return false;
@@ -75,16 +75,16 @@ public class AddInstr extends Instr{
         Instr lhs = op.in(0);
         Instr rhs = op.in(1);
 
-        PhiInstr lphi = pcon(lhs);
+        PhiInstr lphi = pcon(lhs, op);
         if(rotate && lphi == null && lhs.nIns() > 1) {
             if(lhs.getClass() != op.getClass()) return null;
-            lphi  = pcon(lhs.in(1));
+            lphi  = pcon(lhs.in(1), op);
         }
 
         if( lphi==null ) return null;
 
         // RHS is a constant or a Phi of constants
-        if( !(rhs instanceof ConstantInstr con) && pcon(rhs)==null )
+        if( !(rhs instanceof ConstantInstr con) && pcon(rhs, op)==null )
             return null;
 
         // If both are Phis, must be same Region
@@ -101,8 +101,8 @@ public class AddInstr extends Instr{
         return lhs==lphi ? phi : op.copy(c,lhs.in(0),phi);
     }
 
-    static PhiInstr pcon(Instr op) {
-        return op instanceof PhiInstr phi && phi.allCons() ? phi: null;
+    static PhiInstr pcon(Instr op, Instr dep) {
+        return op instanceof PhiInstr phi && phi.allCons(dep) ? phi: null;
     }
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {

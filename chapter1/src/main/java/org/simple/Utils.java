@@ -84,4 +84,62 @@ public class Utils {
         }
 
     }
+
+    public static class WorkListI<E extends Instr> {
+        private Instr[] _es;
+        private int _len;
+        private final BitSet _on;
+        private long _totalWork = 0;
+
+        WorkListI() {
+            _es = new Instr[1];
+            _len = 0;
+            _on = new BitSet();
+        }
+
+        public E push( E x ) {
+            if( x==null ) return null;
+            int idx = x._nid;
+            if( !_on.get(idx) ) {
+                _on.set(idx);
+                // _len * 2
+                if( _len==_es.length )
+                    _es = Arrays.copyOf(_es,_len<<1);
+                _es[_len++] = x;
+                _totalWork++;
+            }
+            return x;
+        }
+
+        public  boolean isEmpty() {
+            return _len == 0;
+        }
+        public void addAll(ArrayList<E> ary) {
+            for(E n: ary) push(n);
+        }
+
+        boolean on(E x) {return _on.get(x._nid);}
+
+        // FIFO
+        Instr pop() {
+            if (_len == 0) return null;
+            Instr x = _es[0];
+
+            for (int i = 1; i < _len; i++) {
+                _es[i - 1] = _es[i];
+            }
+
+            _len--;
+
+            _on.clear(x._nid);
+            return x;
+        }
+
+        public void clear() {
+            _len = 0;
+            _on.clear();
+            _totalWork = 0;
+        }
+
+    }
 }

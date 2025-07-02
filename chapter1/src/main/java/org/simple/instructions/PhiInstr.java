@@ -40,17 +40,23 @@ public class PhiInstr extends Instr{
         if(inProgress()) return Type.BOTTOM;
         Type t = Type.TOP;
 
+        if(_bb._preds .size() < 2) {
+            System.out.print("Here");
+        }
         for(int i = 0; i < nIns(); i++) {
-            t = t.meet(in(i)._type);
+            if(_bb._preds.get(i)._type != Type.XCONTROL && in(i) != this) {
+                // If the predecessor is a control flow, we do not consider it
+                t = t.meet(in(i)._type);
+            }
         }
 
         return t;
     }
 
     @Override
-    boolean allCons() {
+    boolean allCons(Instr dep) {
         if(inProgress()) return false;
-        return super.allCons();
+        return super.allCons(dep);
     }
 
     // Todo: use this everywhere
@@ -103,6 +109,11 @@ public class PhiInstr extends Instr{
 
     private Instr singleUniqueInput() {
         Instr live = null;
+        // Todo: handle case where there are no 2 preds.
+        if(_bb._preds.size() < 2) {
+            System.out.print("Here");
+        }
+        // If the region's control input is live, add this as a dependency
         for(int i = 0; i < nIns(); i++) {
         if(in(i) != this && _bb._preds.get(i)._type != Type.XCONTROL) {
             if(live == null || live == in(i)) live = in(i);

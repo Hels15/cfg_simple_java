@@ -10,7 +10,7 @@ import java.util.*;
 
 public class GraphDot {
 
-    public String generateDotOutput(EntryBB entry, Parser parser) {
+    public static String generateDotOutput(EntryBB entry, Parser parser) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("digraph CFG {\n\n");

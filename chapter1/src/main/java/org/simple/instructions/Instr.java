@@ -1,5 +1,7 @@
 package org.simple.instructions;
 
+import org.simple.IterPeeps;
+import org.simple.Parser;
 import org.simple.Utils;
 import org.simple.bbs.BB;
 import org.simple.type.Type;
@@ -25,6 +27,8 @@ public abstract class Instr {
 
     private static int UNIQUE_ID = 1;
 
+
+    ArrayList<Instr> _deps;
 
     public static final HashMap<Instr, Instr> GVN = new HashMap<>();
 
@@ -104,6 +108,9 @@ public abstract class Instr {
     public boolean isUnused(){return nOuts() == 0;}
 
     public void kill() {
+        if(_outputs.size() > 0) {
+            System.out.print("Here");
+        }
         assert isUnused();
         for( int i=0; i<nIns(); i++ )
             setDef(i,null);
@@ -112,7 +119,7 @@ public abstract class Instr {
         assert isDead();
     }
 
-    boolean isDead() { return isUnused() && nIns()==0 && _type==null; }
+    public boolean isDead() { return isUnused() && nIns()==0 && _type==null; }
 
 
     // Subclasses add extra checks (such as ConstantNodes have same constant),
@@ -173,7 +180,7 @@ public abstract class Instr {
         Utils.del(_inputs, idx);
     }
 
-    void subsume(Instr nnn) {
+    public void subsume(Instr nnn) {
         while(nOuts() > 0) {
             Instr n = _outputs.removeLast();
             int idx = Utils.find(n._inputs, this);
@@ -188,16 +195,38 @@ public abstract class Instr {
         _inputs.set(1, tmp);
         return this;
     }
+    Instr addDep(Instr dep) {
+        if(_deps == null) _deps = new ArrayList<>();
+        if(Utils.find(_deps, dep) != -1)    return this;
+        if(Utils.find(_inputs, dep) != -1)  return this;
+        if(Utils.find(_outputs, dep) != -1) return this;
+        _deps.add(dep);
+        return this;
+    }
+
+    public void moveDepsToWorkList() {
+        if(_deps == null) return;
+        IterPeeps.addAll(_deps);
+        _deps.clear();
+    }
     protected boolean delUse(Instr n) {
         Utils.del(_outputs, Utils.find(_outputs, n));
         return _outputs.isEmpty();
     }
 
-    boolean allCons() {
+    boolean allCons(Instr dep) {
         for(int i = 0; i < nIns(); i++)
-            if(!(in(i)._type.isConstant()))
+            if(!(in(i)._type.isConstant())) {
+                in(i).addDep(dep);
                 return false;
+            }
+
         return true;
+    }
+
+    public Instr iterate() {
+        IterPeeps.iterate(Parser._entry);
+        return this;
     }
 
     public boolean pure() {return true;}
@@ -217,12 +246,18 @@ public abstract class Instr {
         assert old == null || type.isa(old);
         if(old == type) return old;
         _type = type;
+        // This is the main populator
+        IterPeeps.addAll(_outputs);
+        moveDepsToWorkList();
         // Iterpeeps call here
         // move deps to worklist
         return old;
     }
 
     public final Instr peepholeOpt() {
+        if(_nid == 6) {
+            System.out.print("Here");
+        }
         Type old = setType(compute());
         if(!(this instanceof ConstantInstr) && _type.isConstant())
             return new ConstantInstr(_type, _bb).peephole();

@@ -1,8 +1,10 @@
 package org.simple.instructions;
 
+import org.simple.IterPeeps;
 import org.simple.bbs.BB;
 import org.simple.type.Type;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 public class ScopeInstr extends Instr{
@@ -52,15 +54,9 @@ public class ScopeInstr extends Instr{
         for(HashMap<String, Integer> sysms: _scopes) {
             dup._scopes.push(new HashMap<>(sysms));
         }
-        for(int i = 0; i < nIns(); i++) {
-            if(!loop) dup.addDef(in(i));
-            else {
-                String[] names = reverseNames();
+        for(int i = 0; i < nIns(); i++)
+            dup.addDef(loop ? this: in(i));
 
-                dup.addDef(new PhiInstr(_bb, names[i], in(i), null)).peephole();
-                setDef(i, dup.in(i));
-            }
-        }
         dup._bb = _bb;
         return dup;
     }
@@ -74,7 +70,19 @@ public class ScopeInstr extends Instr{
                 phi.subsume(in);
             }
         }
+
         back.kill();
+        for(int i = 0; i < nIns(); i++) {
+            if(in(i) instanceof PhiInstr phi) {
+                Instr in = phi.peephole();
+                IterPeeps.addAll(phi._outputs);
+                phi.moveDepsToWorkList();
+                if(in != phi) {
+                    phi.subsume(in);
+                    setDef(i, in);
+                }
+            }
+        }
     }
     public void mergeScopes(ScopeInstr that, BB cb) {
         String[] ns = reverseNames();
@@ -109,6 +117,18 @@ public class ScopeInstr extends Instr{
         if( idx == null ) return update(name,n,nestingLevel-1);
 
         Instr old = in(idx);
+
+        if( old instanceof ScopeInstr loop ) {
+            // Lazy Phi!
+            old = loop.in(idx) instanceof PhiInstr phi
+                    // Loop already has a real Phi, use it
+                    ? loop.in(idx)
+                    // Set real Phi in the loop head
+                    // The phi takes its one input (no backedge yet) from a recursive
+                    // lookup, which might have insert a Phi in every loop nest.
+                    : loop.setDef(idx,new PhiInstr(_bb, name, loop.update(name,null,nestingLevel),null).peephole());
+            setDef(idx,old);
+        }
 
         return n==null ? old : setDef(idx,n);
     }

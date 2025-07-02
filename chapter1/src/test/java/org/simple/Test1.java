@@ -1225,5 +1225,68 @@ public class Test1 {
         }
         // WorkList algo here
 
+        @Test public void testWorklist1() {
+                Parser parser = new Parser(
+                 """
+                         int step = 1;
+                         while (arg < 10) {
+                             arg = arg + step + 1;
+                         }
+                         return arg;
+                        """
+                );
+                GraphEval eval = new GraphEval(Parser._entry);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(bb4,arg,(Phi_arg+2));", instr.toString());
+                assertEquals(11, eval.evaluate(1).value());
+        }
+        @Test public void testWorklist2() {
+                Parser parser = new Parser(
+                """
+                Parser parser = new Parser(
+                int cond = 0;
+                int one = 1;
+                while (arg < 10) {
+                        if (cond) one = 2;
+                        arg = arg + one*3 + 1;
+                }
+                return arg;   
+                )
+                """);
+                GraphEval eval = new GraphEval(Parser._entry);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(bb4,arg,(Phi_arg+4));", instr.toString());
+                assertEquals(13, eval.evaluate(1).value());
+        }
+
+        @Test public void testWorklist3() {
+                Parser parser = new Parser(
+                        """
+                                int v1 = 0;
+                                int v2 = 0;
+                                int v3 = 0;
+                                int v4 = 0;
+                                int v5 = 0;
+                                int v6 = 0;
+                                int v7 = 0;
+                                int v8 = 0;
+                                while (arg) {
+                                    if (v1) v2 = 1;
+                                    if (v2) v3 = 1;
+                                    if (v3) v4 = 1;
+                                    if (v4) v5 = 1;
+                                    if (v5) v6 = 1;
+                                    if (v6) v7 = 1;
+                                    if (v7) v8 = 1;
+                                    arg = arg + v8 + 1;
+                                }
+                                return arg;
+                        )
+                        """);
+                GraphEval eval = new GraphEval(Parser._entry);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                assertEquals("return Phi(Loop14,arg,(Phi_arg+1));", instr.toString());
+        }
+
 }
 
