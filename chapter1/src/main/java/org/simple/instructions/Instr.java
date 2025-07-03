@@ -78,6 +78,7 @@ public abstract class Instr {
     }
 
     public Instr addDef(Instr new_def) {
+        unlock();
         _inputs.add(new_def);
         if(new_def != null) new_def.addUse(this);
         return new_def;
@@ -108,9 +109,8 @@ public abstract class Instr {
     public boolean isUnused(){return nOuts() == 0;}
 
     public void kill() {
-        if(_outputs.size() > 0) {
-            System.out.print("Here");
-        }
+        unlock();
+
         assert isUnused();
         for( int i=0; i<nIns(); i++ )
             setDef(i,null);
@@ -146,6 +146,7 @@ public abstract class Instr {
     }
 
     void popN(int n ) {
+        unlock();
         for (int i = 0; i < n; i++) {
             Instr old_def = _inputs.removeLast();
             if(old_def != null && old_def.delUse(this)) {
@@ -155,6 +156,7 @@ public abstract class Instr {
     }
 
     public Instr setDef(int idx, Instr new_def) {
+        unlock();
         Instr old_def = in(idx);
         if(old_def == new_def) return this;
 
@@ -190,6 +192,7 @@ public abstract class Instr {
         kill();
     }
     Instr swap12() {
+        unlock();
         Instr tmp = in(0);
         _inputs.set(0, in(1));
         _inputs.set(1, tmp);
@@ -229,6 +232,10 @@ public abstract class Instr {
         return this;
     }
 
+    public boolean debug() {
+        return false;
+    }
+
     public boolean pure() {return true;}
     public final Instr peephole() {
         if(_disablePeephole) {
@@ -255,9 +262,6 @@ public abstract class Instr {
     }
 
     public final Instr peepholeOpt() {
-        if(_nid == 6) {
-            System.out.print("Here");
-        }
         Type old = setType(compute());
         if(!(this instanceof ConstantInstr) && _type.isConstant())
             return new ConstantInstr(_type, _bb).peephole();

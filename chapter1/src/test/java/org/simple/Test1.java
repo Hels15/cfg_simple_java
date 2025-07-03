@@ -1236,7 +1236,7 @@ public class Test1 {
                         """
                 );
                 GraphEval eval = new GraphEval(Parser._entry);
-                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true).iterate();
                 assertEquals("return Phi(bb4,arg,(Phi_arg+2));", instr.toString());
                 assertEquals(11, eval.evaluate(1).value());
         }

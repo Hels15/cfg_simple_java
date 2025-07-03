@@ -15,6 +15,10 @@ public class ContinueInstr extends Instr{
         return "Continue";
     }
 
+    @Override public boolean debug() {
+        return true;
+    }
+
     @Override
     StringBuilder _print1(StringBuilder sb, BitSet visited) {
         return sb.append(label());

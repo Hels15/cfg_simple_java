@@ -13,6 +13,10 @@ public class BreakInstr extends Instr {
         _bb = c;
     }
 
+    @Override public boolean debug() {
+        return true;
+    }
+
     @Override
     public String label() {
         return "Break";

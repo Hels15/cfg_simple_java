@@ -29,6 +29,10 @@ public class ScopeInstr extends Instr{
         for(int j = 0; j < nIns(); j++) {
             sb.append(names[j]).append(":");
             Instr instr = in(j);
+            while(instr instanceof ScopeInstr loop) {
+                sb.append("Lazy_");
+                instr = loop.in(j);
+            }
             instr._print0(sb, visited).append(" ");
         }
         return sb.append("]");
@@ -61,14 +65,13 @@ public class ScopeInstr extends Instr{
         return dup;
     }
 
-    public void endLoop(ScopeInstr back) {
+    public void endLoop(ScopeInstr back, ScopeInstr exit) {
         for(int i = 0; i < nIns(); i++) {
-            PhiInstr phi = (PhiInstr)in(i);
-            phi.setDef(1, back.in(i));
-            Instr in = phi.peephole();
-            if(in != phi) {
-                phi.subsume(in);
+            if(back.in(i) != this) {
+                PhiInstr phi = (PhiInstr)in(i);
+                phi.setDef(1, back.in(i));
             }
+            if(exit.in(i) == this) exit.setDef(i, in(i));
         }
 
         back.kill();

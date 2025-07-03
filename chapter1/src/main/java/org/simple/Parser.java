@@ -181,6 +181,7 @@ public class Parser {
 
         ScopeInstr head = _scope.keep();
         _scope.ctrl(_cBB);
+        // Lazily create them
         _scope = _scope.dup(true);
 
         var pred = require(parseExpression(), ")");
@@ -206,7 +207,7 @@ public class Parser {
         _cBB._kind = BB.BBKind.BACK_EDGE;
 
         // kills redundant phi(s)
-        head.endLoop(_scope);
+        head.endLoop(_scope, exit);
 
         head.unkeep().kill();
 

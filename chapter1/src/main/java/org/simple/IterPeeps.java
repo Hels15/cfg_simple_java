@@ -25,8 +25,9 @@ public abstract class IterPeeps {
         int cnt=0;
 
         while((i = WORK.pop()) != null) {
-            if(i.isDead()) continue;
+            if(i.isDead() || i.debug()) continue;
             cnt++;
+
             Instr x = i.peepholeOpt();
             if(x != null) {
                 if(x.isDead()) continue;

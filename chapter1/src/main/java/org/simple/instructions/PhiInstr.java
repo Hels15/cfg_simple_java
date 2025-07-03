@@ -40,9 +40,6 @@ public class PhiInstr extends Instr{
         if(inProgress()) return Type.BOTTOM;
         Type t = Type.TOP;
 
-        if(_bb._preds .size() < 2) {
-            System.out.print("Here");
-        }
         for(int i = 0; i < nIns(); i++) {
             if(_bb._preds.get(i)._type != Type.XCONTROL && in(i) != this) {
                 // If the predecessor is a control flow, we do not consider it
@@ -66,9 +63,13 @@ public class PhiInstr extends Instr{
 
     @Override
     public Instr idealize() {
+        // not a merge point so eg can't do singleUniqueInput optimisation
+        if(inProgress()) return null;
+
         if(same_inputs()) return in(0);
 
         Instr op = in(0);
+
 
         // Single unique input when a bb is dead is handled in the passManager
         // When an input is same as the phi itself we handle it here
@@ -110,9 +111,7 @@ public class PhiInstr extends Instr{
     private Instr singleUniqueInput() {
         Instr live = null;
         // Todo: handle case where there are no 2 preds.
-        if(_bb._preds.size() < 2) {
-            System.out.print("Here");
-        }
+
         // If the region's control input is live, add this as a dependency
         for(int i = 0; i < nIns(); i++) {
         if(in(i) != this && _bb._preds.get(i)._type != Type.XCONTROL) {

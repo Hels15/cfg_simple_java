@@ -15,6 +15,10 @@ public class AssignmentInstr extends Instr{
         _init = init;
     }
 
+    @Override public boolean debug() {
+        return true;
+    }
+
     @Override
     public String label() {
         return _name;
