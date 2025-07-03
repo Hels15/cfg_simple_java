@@ -7,9 +7,23 @@ public class TypeTuple extends Type{
         this._types = _types;
     }
 
+    public static TypeTuple make(Type... types) {return new TypeTuple(types).intern();}
+
     @Override
     public Type xmeet(Type other) {
-        throw new UnsupportedOperationException("Meet on Tuple Type not yet implemented");
+        TypeTuple tt = (TypeTuple)other;     // contract from xmeet
+        assert _types.length == tt._types.length;
+        Type[] ts = new Type[_types.length];
+        for( int i=0; i<_types.length; i++ )
+            ts[i] = _types[i].meet(tt._types[i]);
+        return make(ts);
+    }
+
+    @Override public Type dual() {
+        Type[] ts = new Type[_types.length];
+        for( int i=0; i<_types.length; i++ )
+            ts[i] = _types[i].dual();
+        return make(ts);
     }
 
     @Override
@@ -27,4 +41,20 @@ public class TypeTuple extends Type{
     public static final TypeTuple IF_TRUE    = new TypeTuple(new Type[]{Type.CONTROL, Type.XCONTROL});
     public static final TypeTuple IF_FALSE   = new TypeTuple(new Type[]{Type.XCONTROL,Type.CONTROL});
 
+    @Override
+    int hash() {
+        int sum = 0;
+        for( Type type : _types ) sum ^= type.hashCode();
+        return sum;
+    }
+
+    @Override
+    boolean eq( Type t ) {
+        TypeTuple tt = (TypeTuple)t; // Contract
+        if( _types.length != tt._types.length ) return false;
+        for( int i=0; i<_types.length; i++ )
+            if( _types[i]!=tt._types[i] )
+                return false;
+        return true;
+    }
 }

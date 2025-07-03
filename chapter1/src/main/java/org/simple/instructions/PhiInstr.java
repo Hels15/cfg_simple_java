@@ -39,12 +39,15 @@ public class PhiInstr extends Instr{
         // In progress
         if(inProgress()) return Type.BOTTOM;
         Type t = Type.TOP;
-
+        if(_nid == 17) {
+            System.out.print("Here");
+        }
+        // replace _bb._preds.get(i)._type with in(i)._bb._type
         for(int i = 0; i < nIns(); i++) {
-            if(_bb._preds.get(i)._type != Type.XCONTROL && in(i) != this) {
-                // If the predecessor is a control flow, we do not consider it
-                t = t.meet(in(i)._type);
-            }
+                if(in(i)._bb._type != Type.XCONTROL && in(i) != this) {
+                    // If the predecessor is a control flow, we do not consider it
+                    t = t.meet(in(i)._type);
+                }
         }
 
         return t;
@@ -114,7 +117,7 @@ public class PhiInstr extends Instr{
 
         // If the region's control input is live, add this as a dependency
         for(int i = 0; i < nIns(); i++) {
-        if(in(i) != this && _bb._preds.get(i)._type != Type.XCONTROL) {
+        if(in(i) != this && in(i)._bb._type != Type.XCONTROL) {
             if(live == null || live == in(i)) live = in(i);
             else return null;
         }

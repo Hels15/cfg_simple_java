@@ -91,7 +91,10 @@ public class ScopeInstr extends Instr{
         String[] ns = reverseNames();
         for(int i = 0; i < nIns(); i++) {
             if( in(i) != that.in(i) ) { // No need for redundant Phis
-                Instr phi = new PhiInstr(cb, ns[i], in(i), that.in(i)).peephole();
+                Instr phi = new PhiInstr(cb, ns[i], lookup(ns[i]), that.lookup(ns[i])).peephole();
+                if(phi._nid == 19) {
+                    System.out.print("Here");
+                }
                 cb.addInstr(phi);
                 setDef(i, phi);
             }

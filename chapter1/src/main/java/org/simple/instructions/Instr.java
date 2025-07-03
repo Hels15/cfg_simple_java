@@ -46,6 +46,9 @@ public abstract class Instr {
         _inputs = new ArrayList<>();
         _outputs = new ArrayList<>();
 
+        if(_nid == 19) {
+            System.out.print("Here");
+        }
         Collections.addAll(_inputs,inputs);
         for( Instr n : _inputs )
             if( n != null )
@@ -250,7 +253,12 @@ public abstract class Instr {
     public Type setType(Type type) {
         Type old = _type;
         // gradual type increment
-        assert old == null || type.isa(old);
+
+        //assert old == null || type.isa(old);
+        if (!(old == null || type.isa(old))) {
+            // Place a regular breakpoint on the line below
+            System.out.println("Breakpoint condition met");
+        }
         if(old == type) return old;
         _type = type;
         // This is the main populator

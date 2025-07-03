@@ -62,7 +62,7 @@ public class Type{
         if(is_simple()) return this.xmeet(t);
         if(t.is_simple()) return t.xmeet(this);
 
-        return Type.BOTTOM;
+        return xmeet(t);
     }
 
     public final Type join(Type t) {
@@ -78,6 +78,8 @@ public class Type{
             default -> throw Utils.TODO("Should not reach here!"); // Should not reach here
         };
     }
+
+    public boolean isHighOrConst() { return _type==TTOP || _type==TXCTRL; }
 
     public boolean isa(Type t) {return meet(t) == t;}
     protected Type xmeet(Type t) {
@@ -95,7 +97,7 @@ public class Type{
         return _print(new StringBuilder()).toString();
     }
 
-    public boolean isConstant() {return _type == TTOP || _type == TXCTRL;}
+    public boolean isConstant() {return false;}
 
     public StringBuilder _print(StringBuilder sb) {return is_simple() ? sb.append(STRS[_type]) : sb;}
 

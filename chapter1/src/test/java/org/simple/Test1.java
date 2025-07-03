@@ -1243,18 +1243,17 @@ public class Test1 {
         @Test public void testWorklist2() {
                 Parser parser = new Parser(
                 """
-                Parser parser = new Parser(
                 int cond = 0;
                 int one = 1;
                 while (arg < 10) {
-                        if (cond) one = 2;
-                        arg = arg + one*3 + 1;
+                    if (cond) one = 2;
+                    arg = arg + one*3 + 1;
                 }
-                return arg;   
-                )
+                return arg;
+               
                 """);
                 GraphEval eval = new GraphEval(Parser._entry);
-                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true).iterate();
                 assertEquals("return Phi(bb4,arg,(Phi_arg+4));", instr.toString());
                 assertEquals(13, eval.evaluate(1).value());
         }
