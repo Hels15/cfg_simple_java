@@ -18,6 +18,9 @@ public class PassManager {
         int count_bb_instr = bb._instrs.size();
         // if a basic block ends with a break it can only have one successor(the shared exit)
         // this opt gets rid of the other successor
+        if(bb._nid == 6) {
+            System.out.print("Here");
+        }
         if(bb._kind == BB.BBKind.BREAK && bb._succs.size() == 2) {
             for(int i = 0; i < bb._succs.size(); i++) {
                 BB succ = bb._succs.get(i);
@@ -107,7 +110,9 @@ public class PassManager {
 
         while (!wl.isEmpty()) {
             BB bb = wl.pop();
-
+            if(bb._nid == 6) {
+                System.out.print("Here");
+            }
             // still needed
             if(!visited.add(bb)) continue;
             while(bb_dead(bb, parser)) {
@@ -121,6 +126,9 @@ public class PassManager {
 
     boolean combine(BB bb, Parser parser) {
            boolean changed = false;
+           if(bb._nid == 6) {
+               System.out.print("Here");
+           }
            // if the next block has only one predecessor and it is the current block
            // then we can combine the two blocks and kill the successor, we also add the successors of the killed
            // block to the current block so that the graph still remains sound

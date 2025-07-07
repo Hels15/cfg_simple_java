@@ -100,6 +100,9 @@ public class Utils {
         public E push( E x ) {
             if( x==null ) return null;
             int idx = x._nid;
+            if(idx == 10) {
+                System.out.print("Here");
+            }
             if( !_on.get(idx) ) {
                 _on.set(idx);
                 // _len * 2

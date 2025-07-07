@@ -69,7 +69,9 @@ public class PhiInstr extends Instr{
         // not a merge point so eg can't do singleUniqueInput optimisation
         if(inProgress()) return null;
 
-        if(same_inputs()) return in(0);
+        if(same_inputs()) {
+            return in(0);
+        }
 
         Instr op = in(0);
 

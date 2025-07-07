@@ -5,6 +5,7 @@ import org.simple.Parser;
 import org.simple.Utils;
 import org.simple.bbs.BB;
 import org.simple.type.Type;
+import org.simple.type.TypeTuple;
 
 import javax.sound.midi.SysexMessage;
 import javax.swing.plaf.synth.SynthTableHeaderUI;
@@ -113,12 +114,16 @@ public abstract class Instr {
 
     public void kill() {
         unlock();
-
         assert isUnused();
-        for( int i=0; i<nIns(); i++ )
-            setDef(i,null);
-        _inputs.clear();
         _type=null;
+        while( nIns()>0 ) {
+            Instr old_def = _inputs.removeLast();
+            if( old_def != null ) {
+                IterPeeps.add(old_def);
+                if( old_def.delUse(this) )
+                    old_def.kill();
+            }
+        }
         assert isDead();
     }
 
@@ -259,6 +264,7 @@ public abstract class Instr {
             // Place a regular breakpoint on the line below
             System.out.println("Breakpoint condition met");
         }
+        assert old==null || type.isa(old);
         if(old == type) return old;
         _type = type;
         // This is the main populator
@@ -271,6 +277,10 @@ public abstract class Instr {
 
     public final Instr peepholeOpt() {
         Type old = setType(compute());
+        // means that after the iterative algo we finally figure out that the cond is dead
+        if(_nid == 14 && _type != null && _type != TypeTuple.IF_BOTH) {
+            System.out.print("Here");
+        }
         if(!(this instanceof ConstantInstr) && _type.isConstant())
             return new ConstantInstr(_type, _bb).peephole();
 
@@ -292,9 +302,13 @@ public abstract class Instr {
             }
         }
         Instr n = idealize();
+        if(_nid == 20 &&n != null) {
+            System.out.print("Here");
+        }
         if(n != null) {
             return n;
         }
+
         return old ==_type ? null: this;
     }
 

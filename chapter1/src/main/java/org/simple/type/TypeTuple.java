@@ -36,10 +36,10 @@ public class TypeTuple extends Type{
         return sb;
     }
 
-    public static final TypeTuple IF_BOTH    = new TypeTuple(new Type[]{Type.CONTROL, Type.CONTROL});
-    public static final TypeTuple IF_NEITHER = new TypeTuple(new Type[]{Type.XCONTROL,Type.XCONTROL});
-    public static final TypeTuple IF_TRUE    = new TypeTuple(new Type[]{Type.CONTROL, Type.XCONTROL});
-    public static final TypeTuple IF_FALSE   = new TypeTuple(new Type[]{Type.XCONTROL,Type.CONTROL});
+    public static final TypeTuple IF_BOTH    = make(new Type[]{Type.CONTROL, Type.CONTROL});
+    public static final TypeTuple IF_NEITHER = make(new Type[]{Type.XCONTROL,Type.XCONTROL});
+    public static final TypeTuple IF_TRUE    = make(new Type[]{Type.CONTROL, Type.XCONTROL});
+    public static final TypeTuple IF_FALSE   = make(new Type[]{Type.XCONTROL,Type.CONTROL});
 
     @Override
     int hash() {

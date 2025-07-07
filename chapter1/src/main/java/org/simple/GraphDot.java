@@ -38,7 +38,7 @@ public class GraphDot {
 
             sb.append("/*\n");
 
-            sb.append(parser.src());
+
             sb.append("\n*/\n");
 
             sb.append("  ").append(bbId).append(" [\n");

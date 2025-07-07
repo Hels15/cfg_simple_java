@@ -45,7 +45,12 @@ public class IfInstr extends Instr {
             if (ti.value() == 0) return TypeTuple.IF_FALSE;
             else return TypeTuple.IF_TRUE;
         }
+        // Already in worklist becuase the if is an output of the predicate
+        if(pred() instanceof PhiInstr) {
+            System.out.print("Here");
+        }
 
+        pred().addDep(this);
         for(BB dom = _bb.idom(), prior=_bb; dom!=null;  prior=dom, dom = dom.idom() )
             if(!dom._instrs.isEmpty() && dom.endInstr() instanceof IfInstr iff && iff.pred()==pred() ) {
                 int idx = dom.idx(prior);
@@ -87,11 +92,22 @@ public class IfInstr extends Instr {
 
         truebb._type = trueType;
         _true_bb = truebb;
-        c.addSuccessor(truebb);
+
+        if(c._succs.size() == 2) {
+            c._succs.set(0, truebb);
+        } else {
+            c.addSuccessor(truebb);
+        }
 
         falsebb._type = falseType;
         _false_bb = falsebb;
-        c.addSuccessor(falsebb);
+
+        if(c._succs.size() == 2) {
+            c._succs.set(1, falsebb);
+        } else {
+            c.addSuccessor(falsebb);
+        }
+
     }
 
     // This is a specific method to add a successor BB to the 2 branches of the if

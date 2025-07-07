@@ -79,6 +79,10 @@ public class ScopeInstr extends Instr{
             if(in(i) instanceof PhiInstr phi) {
                 Instr in = phi.peephole();
                 IterPeeps.addAll(phi._outputs);
+                // folds phi and becomes 0
+                if(phi._nid == 13) {
+                    System.out.print("Here");
+                }
                 phi.moveDepsToWorkList();
                 if(in != phi) {
                     phi.subsume(in);

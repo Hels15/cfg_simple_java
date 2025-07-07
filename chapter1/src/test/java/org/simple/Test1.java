@@ -1240,6 +1240,7 @@ public class Test1 {
                 assertEquals("return Phi(bb4,arg,(Phi_arg+2));", instr.toString());
                 assertEquals(11, eval.evaluate(1).value());
         }
+
         @Test public void testWorklist2() {
                 Parser parser = new Parser(
                 """
@@ -1252,8 +1253,14 @@ public class Test1 {
                 return arg;
                
                 """);
-                GraphEval eval = new GraphEval(Parser._entry);
+
                 ReturnInstr instr = (ReturnInstr)parser.parse(true).iterate();
+
+                Parser._pass.bb_dead_main(Parser._entry, parser);
+                Parser._pass.bb_combine_main(Parser._entry, parser);
+
+                GraphEval eval = new GraphEval(Parser._entry);
+                System.out.print(GraphDot.generateDotOutput(Parser._entry, parser));
                 assertEquals("return Phi(bb4,arg,(Phi_arg+4));", instr.toString());
                 assertEquals(13, eval.evaluate(1).value());
         }
@@ -1283,7 +1290,7 @@ public class Test1 {
                         )
                         """);
                 GraphEval eval = new GraphEval(Parser._entry);
-                ReturnInstr instr = (ReturnInstr)parser.parse(true);
+                ReturnInstr instr = (ReturnInstr)parser.parse(true).iterate();
                 assertEquals("return Phi(Loop14,arg,(Phi_arg+1));", instr.toString());
         }
 
